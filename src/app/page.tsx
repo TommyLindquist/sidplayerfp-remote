@@ -18,7 +18,9 @@ export default function Page() {
   const imageRingBuffer = useRef<string[]>([]);
   const bufferSize = 300;
   const [bufferFill, setBufferFill] = useState(0);
+  const [isPrimed, setIsPrimed] = useState(false);
   const [ipSent, setIpSent] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
   const [muteSetting, setMuteSetting] = useState(["", "", "", "", ""]);
   let repeatChecked = useRef<boolean>(false);
 
@@ -37,7 +39,6 @@ export default function Page() {
     setIsOpen(true);
   }
 };
-
 
   const [sidplayerIp, setSidplayerIp] = useState<string | null>(null);
   const [enableDebug, setDebugEnabled] = useState(false);
@@ -69,8 +70,7 @@ useEffect(() => {
   }).then(() => setIpSent(true));
 }, [sidplayerIp, ipSent]);
 
-
-  const setupAudio = async (ctx: AudioContext) => {
+   const setupAudio = async (ctx: AudioContext) => {
     await ctx.audioWorklet.addModule("/sid-processor.js");
 
     if (audioNodeRef.current) {
@@ -109,11 +109,13 @@ useEffect(() => {
       node.port.postMessage({ left, right });
     };
 
-      node.port.onmessage = (event) => {
-      const { type, fillRatio} = event.data;
+    node.port.onmessage = (event) => {
+      const { type, fillRatio, isPrimed, buffering } = event.data;
 
       if (type === "status") {
         setBufferFill(fillRatio);
+        setIsPrimed(isPrimed);
+        setIsBuffering(buffering);
       }
     };
 
@@ -195,6 +197,7 @@ useEffect(() => {
       audioCtx.close();
       setAudioCtx(null);
     }
+    setIsPrimed(false);
     setBufferFill(0);
   };
 
@@ -357,7 +360,6 @@ useEffect(() => {
 
   const muteSettingsButtons = [
     {
-      text: "",
       bgColor: "rgba(158, 0, 255, 255)",
       click: () => {
         send("mutesetting0");
@@ -365,7 +367,6 @@ useEffect(() => {
       },
     },
     {
-      text: "",
       bgColor: "rgba(255, 176, 0, 23)",
       click: () => {
         send("mutesetting1");
@@ -373,7 +374,6 @@ useEffect(() => {
       },
     },
     {
-      text: "",
       bgColor: "rgba(211, 140, 53, 33)",
       click: () => {
         send("mutesetting2");
@@ -381,7 +381,6 @@ useEffect(() => {
       },
     },
     {
-      text: "",
       bgColor: "rgba(61, 255, 0, 23)",
       click: () => {
         send("mutesetting3");
@@ -389,7 +388,6 @@ useEffect(() => {
       },
     },
     {
-      text: "",
       bgColor: "rgba(255, 255, 255, 123)",
       click: () => {
         send("mutesetting4");
@@ -398,7 +396,6 @@ useEffect(() => {
       className: "text-black",
     },
   ];
-
 
   return (
     <div style={{ padding: 20 }}>
@@ -560,7 +557,34 @@ useEffect(() => {
         </Modal>
       )}
       </div>
-
+        <div className="mt-[20px] w-[460px]">
+        <label>Buffer Fill:</label>
+        <div
+          style={{
+            width: "100%",
+            height: 10,
+            background: "#ccc",
+            marginTop: 4,
+            position: "relative",
+          }}
+        >
+          <div
+            style={{
+              width: `${(bufferFill * 100).toFixed(1)}%`,
+              height: "100%",
+              background: bufferFill > 0.0853 ? "#4caf50" : "#f44336",
+              transition: "width 0.1s linear",
+            }}
+          />
+        </div>
+        <div style={{ fontSize: 12, marginTop: 8 }}>
+          {isBuffering
+            ? "⏳ Buffering…"
+            : isPrimed
+            ? "✅ Ready to play"
+            : "⏳ Waiting for buffer…"}
+        </div>
+        </div>
 
     </div>
   );}

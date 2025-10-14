@@ -12,7 +12,7 @@ export function MuteSettingsButton({
     styles?: React.CSSProperties;
 }){
 return <button
- className={`text-amber-50 cursor-pointer mt-2 ${className}`}
+ className={`text-amber-50 cursor-pointer mt-2 items-baseline ${className}`}
  style={{
     backgroundColor: bgColor,
     width: 30,
