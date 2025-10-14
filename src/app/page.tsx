@@ -5,6 +5,7 @@ import { getSettingsFromCookie } from "./utils";
 import { Modal } from "./ui/modal";
 import FormSettings from "./ui/form-settings";
 import { CustomButton } from "@/components/custom-button";
+import { MuteSettingsButton } from "@/components/mute-settings-button";
 
 export default function Page() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -18,10 +19,15 @@ export default function Page() {
   const bufferSize = 300;
   const [bufferFill, setBufferFill] = useState(0);
   const [ipSent, setIpSent] = useState(false);
+  const [muteSetting, setMuteSetting] = useState(["", "", "", "", ""]);
+  let repeatChecked = useRef<boolean>(false);
+
+
   // for settings
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [modalPos, setModalPos] = useState<{ top: number; left: number } | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  
   const handleOpen = () => {
   const rect = buttonRef.current?.getBoundingClientRect();
   if (rect) {
@@ -31,6 +37,7 @@ export default function Page() {
     setIsOpen(true);
   }
 };
+
 
   const [sidplayerIp, setSidplayerIp] = useState<string | null>(null);
   const [enableDebug, setDebugEnabled] = useState(false);
@@ -225,6 +232,9 @@ useEffect(() => {
     sendUDPCommand(msg);
   };
 
+    const useMuteSettingNumber = (nr: number) =>
+    setMuteSetting(Array.from({ length: 5 }, (_, i) => (i === nr ? "*" : "")));
+
   const startImages = () => {
     sendUDPCommand("getimagesatoff " + currentIp);
     sendUDPCommand("getimagesaton " + currentIp);
@@ -239,6 +249,156 @@ useEffect(() => {
     }
     setImageUrl(null);
   };
+
+    const overlayZones = [
+    {
+      id: "play",
+      topPx: 151,
+      leftPx: 295,
+      widthPx: 20,
+      heightPx: 20,
+      onClick: async () => {
+        if (!audioCtx || !audioSocketRef.current) {
+          await resetAudio(); // full restart
+          send("playpause"); // safe to toggle ON
+        } else {
+          send("playpause"); // toggle normally
+        }
+      },
+    },
+    {
+      id: "stop",
+      topPx: 151,
+      leftPx: 358,
+      widthPx: 20,
+      heightPx: 20,
+      onClick: () => send("stop"),
+    },
+    {
+      id: "stepforward",
+      topPx: 151,
+      leftPx: 387,
+      widthPx: 20,
+      heightPx: 20,
+      onClick: () => {
+        send("stepforward");
+        setTimeout(() => {
+          audioNodeRef.current?.port.postMessage({ type: "flush" });
+        }, 200); // give SID player time to switch tracks
+      },
+    },
+    {
+      id: "stepbackward",
+      topPx: 151,
+      leftPx: 263,
+      widthPx: 20,
+      heightPx: 20,
+      onClick: () => {
+        send("stepbackward");
+        setTimeout(() => {
+          audioNodeRef.current?.port.postMessage({ type: "flush" });
+        }, 200); // give SID player time to switch tracks
+      },
+    },
+    {
+      id: "repeat",
+      topPx: 161,
+      leftPx: 11,
+      widthPx: 12,
+      heightPx: 12,
+      onClick: () =>
+        send(
+          `repeat${
+            (repeatChecked.current = !repeatChecked.current) ? "on" : "off"
+          }`
+        ),
+    },
+    {
+      id: "mute0",
+      topPx: 155,
+      leftPx: 88,
+      widthPx: 20,
+      heightPx: 20,
+      onClick: () => send("mutesetting0"),
+    },
+    {
+      id: "mute1",
+      topPx: 155,
+      leftPx: 116,
+      widthPx: 21,
+      heightPx: 20,
+      onClick: () => send("mutesetting1"),
+    },
+    {
+      id: "mute2",
+      topPx: 155,
+      leftPx: 145,
+      widthPx: 21,
+      heightPx: 20,
+      onClick: () => send("mutesetting2"),
+    },
+    {
+      id: "mute3",
+      topPx: 155,
+      leftPx: 174,
+      widthPx: 21,
+      heightPx: 20,
+      onClick: () => send("mutesetting3"),
+    },
+    {
+      id: "mute4",
+      topPx: 155,
+      leftPx: 200,
+      widthPx: 24,
+      heightPx: 20,
+      onClick: () => send("mutesetting4"),
+    },
+  ];
+
+  const muteSettingsButtons = [
+    {
+      text: "",
+      bgColor: "rgba(158, 0, 255, 255)",
+      click: () => {
+        send("mutesetting0");
+        useMuteSettingNumber(0);
+      },
+    },
+    {
+      text: "",
+      bgColor: "rgba(255, 176, 0, 23)",
+      click: () => {
+        send("mutesetting1");
+        useMuteSettingNumber(1);
+      },
+    },
+    {
+      text: "",
+      bgColor: "rgba(211, 140, 53, 33)",
+      click: () => {
+        send("mutesetting2");
+        useMuteSettingNumber(2);
+      },
+    },
+    {
+      text: "",
+      bgColor: "rgba(61, 255, 0, 23)",
+      click: () => {
+        send("mutesetting3");
+        useMuteSettingNumber(3);
+      },
+    },
+    {
+      text: "",
+      bgColor: "rgba(255, 255, 255, 123)",
+      click: () => {
+        send("mutesetting4");
+        useMuteSettingNumber(4);
+      },
+      className: "text-black",
+    },
+  ];
+
 
   return (
     <div style={{ padding: 20 }}>
@@ -255,6 +415,88 @@ useEffect(() => {
         <br />
         <button onClick={() => audioCtx?.resume()}>Resume Audio</button>
       </div>
+      <section
+        className="grid grid-rows-4 grid-cols-6 gap-1 w-[400px]"
+        style={{
+          gridTemplateAreas: `
+              ". . stop stop . ."
+              ". stepbackward playpause playpause stepforward ."
+              "decreasevolume decreasevolume decreasevolume increasevolume increasevolume increasevolume"
+              "gainlower gainlower repeat repeat gainraise gainraise"
+            `,
+        }}
+      >
+        <CustomButton
+          text="Stop"
+          click={() => send("stop")}
+          styles={{ gridArea: "stop" }}
+        />
+        <CustomButton
+          text="<"
+          click={() => {
+            send("stepbackward");
+            setTimeout(() => {
+              audioNodeRef.current?.port.postMessage({ type: "flush" });
+            }, 200); // give SID player time to switch tracks
+          }}
+          styles={{ gridArea: "stepbackward" }}
+        />
+        <CustomButton
+          text="Play / Pause"
+          click={async () => {
+            if (!audioCtx || !audioSocketRef.current) {
+              await resetAudio(); // full restart
+              send("playpause"); // safe to toggle ON
+            } else {
+              send("playpause"); // toggle normally
+            }
+          }}
+          styles={{ gridArea: "playpause" }}
+        />
+        <CustomButton
+          text=">"
+          click={() => {
+            send("stepforward");
+            setTimeout(() => {
+              audioNodeRef.current?.port.postMessage({ type: "flush" });
+            }, 200); // give SID player time to switch tracks
+          }}
+          styles={{ gridArea: "stepforward" }}
+        />
+        <CustomButton
+          text="Volume -"
+          click={() => send("decreasevolume")}
+          styles={{ gridArea: "decreasevolume" }}
+          className="ml-5 mr-5"
+        />
+        <CustomButton
+          text="Volume +"
+          click={() => send("increasevolume")}
+          styles={{ gridArea: "increasevolume" }}
+          className="mr-5 ml-5"
+        />
+        <CustomButton
+          text="Gain -"
+          click={() => send("gainlower")}
+          styles={{ gridArea: "gainlower" }}
+        />
+        <CustomButton
+          text="Repeat"
+          click={() =>
+            send(
+              `repeat${
+                (repeatChecked.current = !repeatChecked.current) ? "on" : "off"
+              }`
+            )
+          }
+          styles={{ gridArea: "repeat" }}
+        />
+        <CustomButton
+          text="Gain +"
+          click={() => send("gainraise")}
+          styles={{ gridArea: "gainraise" }}
+        />
+      </section>
 
       <div className="mt-5" style={{ width: 460, position: "relative" }}>
         <img
@@ -271,10 +513,41 @@ useEffect(() => {
             willChange: "transform",
           }}
           />
+          {overlayZones.map(
+          ({ id, topPx, leftPx, widthPx, heightPx, onClick }) => {
+            return (
+              <div
+                key={id}
+                onClick={onClick}
+                style={{
+                  position: "absolute",
+                  top: topPx,
+                  left: leftPx,
+                  width: widthPx,
+                  height: heightPx,
+                  cursor: "pointer",
+                  backgroundColor: enableDebug ? "rgba(255,0,0,0.2)" : "transparent",
+                }}
+              />
+            );
+          }
+        )}
       </div>
 
       <div className="flex gap-3 w-[460px] items-baseline">
-
+        {muteSettingsButtons.map((mb, idx) => {
+          return (
+            <MuteSettingsButton
+              key={idx}
+              text={muteSetting[idx]}
+              bgColor={mb.bgColor}
+              click={mb.click}
+              className={mb.className}
+              styles={("styles" in mb && mb.styles) || {}}
+            />
+          );
+        })}
+        
       <CustomButton
         ref={buttonRef}
         text="Settings"
