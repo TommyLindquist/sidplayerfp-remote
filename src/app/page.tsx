@@ -1,103 +1,235 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useRef, useState } from "react";
+
+export default function Page() {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [audioCtx, setAudioCtx] = useState<AudioContext | null>(null);
+  const audioNodeRef = useRef<AudioWorkletNode | null>(null);
+
+  const currentIp = "192.168.1.107";
+  const audioSocketRef = useRef<WebSocket | null>(null);
+  const imageSocketRef = useRef<WebSocket | null>(null);
+  const imageRingBuffer = useRef<string[]>([]);
+  const bufferSize = 300;
+  const [bufferFill, setBufferFill] = useState(0);
+
+  const sendUDPCommand = (cmd: string) => {
+    fetch("http://localhost:3001/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: cmd }),
+    });
+  };
+
+  const setupAudio = async (ctx: AudioContext) => {
+    await ctx.audioWorklet.addModule("/sid-processor.js");
+
+    if (audioNodeRef.current) {
+      audioNodeRef.current.disconnect();
+      audioNodeRef.current = null;
+    }
+
+    const node = new AudioWorkletNode(ctx, "sid-processor", {
+      outputChannelCount: [2],
+    });
+    node.connect(ctx.destination);
+    audioNodeRef.current = node;
+
+    // Clean up previous socket
+    if (audioSocketRef.current) {
+      audioSocketRef.current.onmessage = null;
+      audioSocketRef.current.close();
+      audioSocketRef.current = null;
+    }
+
+    const socket = new WebSocket("ws://localhost:3002/audio");
+    audioSocketRef.current = socket;
+    socket.binaryType = "arraybuffer";
+
+    socket.onmessage = (event) => {
+      const raw = new DataView(event.data);
+      const samples = raw.byteLength / 4;
+      const left = new Float32Array(samples);
+      const right = new Float32Array(samples);
+
+      for (let i = 0; i < samples; i++) {
+        left[i] = raw.getInt16(i * 4, true) / 32768;
+        right[i] = raw.getInt16(i * 4 + 2, true) / 32768;
+      }
+
+      node.port.postMessage({ left, right });
+    };
+
+      node.port.onmessage = (event) => {
+      const { type, fillRatio} = event.data;
+
+      if (type === "status") {
+        setBufferFill(fillRatio);
+      }
+    };
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && ctx.state === "suspended") {
+        ctx.resume();
+      }
+    });
+  };
+
+  const setupImages = () => {
+    const socket = new WebSocket("ws://localhost:3002/images");
+    imageSocketRef.current = socket;
+
+    socket.onmessage = (event) => {
+      const base64 = typeof event.data === "string" ? event.data : null;
+      if (base64 && base64.startsWith("data:image")) {
+        const buf = imageRingBuffer.current;
+        if (buf.length >= bufferSize) buf.shift(); // remove oldest
+        buf.push(base64);
+        setImageUrl(base64); // show latest immediately
+      }
+    };
+
+    socket.onerror = (err) => {
+      console.error("Image WebSocket error:", err);
+    };
+
+    socket.onclose = () => {
+      console.log("Image WebSocket closed");
+    };
+  };
+
+  useEffect(() => {
+    return () => {
+      // Cleanup if needed
+      if (audioSocketRef.current) {
+        audioSocketRef.current.close();
+        audioSocketRef.current = null;
+      }
+      if (audioCtx) {
+        audioCtx.close();
+        setAudioCtx(null);
+      }
+    };
+  }, []);
+
+  const startAudio = async () => {
+    if (audioCtx) return;
+
+    const ctx = new AudioContext({ sampleRate: 48000 });
+    if (ctx.state === "suspended") {
+      await ctx.resume();
+    }
+    setAudioCtx(ctx);
+    await setupAudio(ctx);
+
+    sendUDPCommand("getmusicatoff " + currentIp);
+    sendUDPCommand("getmusicaton " + currentIp);
+    sendUDPCommand("playpause");
+  };
+
+  const stopAudio = () => {
+    sendUDPCommand("getmusicatoff " + currentIp);
+    sendUDPCommand("stop");
+
+    if (audioSocketRef.current) {
+      audioSocketRef.current.onmessage = null;
+      audioSocketRef.current.close();
+      audioSocketRef.current = null;
+    }
+
+    if (audioNodeRef.current) {
+      audioNodeRef.current.disconnect();
+      audioNodeRef.current = null;
+    }
+
+    if (audioCtx) {
+      audioCtx.close();
+      setAudioCtx(null);
+    }
+    setBufferFill(0);
+  };
+
+  const resetAudio = async () => {
+    stopAudio();
+    await new Promise((r) => setTimeout(r, 200)); // give SID player time to reset
+    await startAudio();
+  };
+
+  const resetImages = async () => {
+    stopImages(); // close socket and clear image
+    await new Promise((r) => setTimeout(r, 200)); // give backend time to reset
+    startImages(); // reopen socket and resume stream
+  };
+
+  const send = async (msg: string, justSend = false) => {
+    if (msg !== "playpause") {
+      if (!justSend) {
+        if (msg === "stop") {
+          stopAudio();
+          await new Promise((r) => setTimeout(r, 200)); // give SID player time to reset
+          audioNodeRef?.current?.port.postMessage({ type: "flush" });
+        } else if (!audioSocketRef.current || !audioCtx) {
+          await resetAudio();
+          audioNodeRef?.current?.port.postMessage({ type: "flush" });
+          send("playpause", true);
+          return;
+        }
+
+        if (!imageSocketRef.current) {
+          await resetImages();
+        }
+      }
+    }
+    sendUDPCommand(msg);
+  };
+
+  const startImages = () => {
+    sendUDPCommand("getimagesatoff " + currentIp);
+    sendUDPCommand("getimagesaton " + currentIp);
+    setupImages();
+  };
+
+  const stopImages = () => {
+    sendUDPCommand("getimagesatoff " + currentIp);
+    if (imageSocketRef.current) {
+      imageSocketRef.current.close();
+      imageSocketRef.current = null;
+    }
+    setImageUrl(null);
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div style={{ padding: 20 }}>
+      <h1>SID PlayerFP Remote</h1>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      <div style={{ marginBottom: 20 }}>
+        <button onClick={startAudio}>Start Audio</button>
+        <br />
+        <button onClick={stopAudio}>Stop Audio</button>
+        <br />
+        <button onClick={startImages}>Start Images</button>
+        <br />
+        <button onClick={stopImages}>Stop Images</button>
+        <br />
+        <button onClick={() => audioCtx?.resume()}>Resume Audio</button>
+      </div>
+
+      <div className="mt-5" style={{ width: 460, position: "relative" }}>
+        <img
+          src={imageUrl ?? "sidplayerFp.png"}
+          alt="Live Stream"
+          width={460}
+          height={280}
+          loading="eager" // skip lazy loading and prioritizes decoding.
+          style={{
+            width: "100%",
+            height: "auto",
+            objectFit: "contain",
+            border: 0,
+            willChange: "transform",
+          }}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
-  );
-}
+  );}
