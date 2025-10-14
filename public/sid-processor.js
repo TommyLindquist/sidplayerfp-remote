@@ -11,6 +11,13 @@ class SIDProcessor extends AudioWorkletProcessor {
     this.port.onmessage = (event) => {
       const { type, left, right } = event.data;
 
+      if (type === "flush") {
+        this.buffer = new RingBuffer(48000);
+        this.playbackState = "buffering";
+        this.port.postMessage({ type: "debug", message: "Flush received" });
+        return;
+      }
+
       if (left && right) {
         this.buffer.push(left, right);
       }
@@ -25,18 +32,44 @@ class SIDProcessor extends AudioWorkletProcessor {
 
     if (!leftOut || !rightOut) return true;
 
-    this.playbackState = "playing";
+    // Check buffer state
+    if (this.playbackState === "buffering") {
+      if (this.buffer.available >= this.primingThreshold) {
+        this.playbackState = "playing";
+      } else {
+        for (let i = 0; i < leftOut.length; i++) {
+          leftOut[i] = 0;
+          rightOut[i] = 0;
+        }
+        this.sendStatus();
+        return true;
+      }
+    }
+
+    // If buffer drops below 2048, re-enter buffering
+    if (this.buffer.available < 2048) {
+      this.playbackState = "buffering";
+      for (let i = 0; i < leftOut.length; i++) {
+        leftOut[i] = 0;
+        rightOut[i] = 0;
+      }
+      this.sendStatus();
+      return true;
+    }
 
     // Normal playback
     this.buffer.pull(leftOut, rightOut);
     this.sendStatus();
     return true;
   }
+
   sendStatus() {
     if (++this.frameCount % 10 === 0) {
       this.port.postMessage({
         type: "status",
-        fillRatio: this.buffer.fillRatio
+        fillRatio: this.buffer.fillRatio,
+        isPrimed: this.playbackState === "playing",
+        buffering: this.playbackState === "buffering",
       });
     }
   }
