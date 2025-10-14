@@ -1,26 +1,67 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { getSettingsFromCookie } from "./utils";
+import { Modal } from "./ui/modal";
+import FormSettings from "./ui/form-settings";
+import { CustomButton } from "@/components/custom-button";
 
 export default function Page() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [audioCtx, setAudioCtx] = useState<AudioContext | null>(null);
   const audioNodeRef = useRef<AudioWorkletNode | null>(null);
 
-  const currentIp = "192.168.1.107";
+  const currentIp = "127.0.0.1";
   const audioSocketRef = useRef<WebSocket | null>(null);
   const imageSocketRef = useRef<WebSocket | null>(null);
   const imageRingBuffer = useRef<string[]>([]);
   const bufferSize = 300;
   const [bufferFill, setBufferFill] = useState(0);
+  const [ipSent, setIpSent] = useState(false);
+  // for settings
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [modalPos, setModalPos] = useState<{ top: number; left: number } | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const handleOpen = () => {
+  const rect = buttonRef.current?.getBoundingClientRect();
+  if (rect) {
+    const centerX = rect.left + rect.width / 2 + window.scrollX;
+    const centerY = rect.top + rect.height / 2 + window.scrollY;
+    setModalPos({ top: centerY, left: centerX });
+    setIsOpen(true);
+  }
+};
+
+  const [sidplayerIp, setSidplayerIp] = useState<string | null>(null);
+  const [enableDebug, setDebugEnabled] = useState(false);
+
+  // Get settings from cookie if any inklude sidplayer IP
+  useEffect(() => {
+    const { sidIp, debugEnabled } = getSettingsFromCookie();
+    setSidplayerIp(sidIp || null);
+    setDebugEnabled(debugEnabled);
+  }, []);
 
   const sendUDPCommand = (cmd: string) => {
     fetch("http://localhost:3001/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: cmd }),
+      body: JSON.stringify({ message: cmd,
+      targetIP: sidplayerIp
+    }),
     });
   };
+
+useEffect(() => {
+  if (!sidplayerIp || ipSent) return;
+  // Send player IP to tcp-bridge
+  fetch('http://localhost:3003/set-ip', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ip: sidplayerIp })
+  }).then(() => setIpSent(true));
+}, [sidplayerIp, ipSent]);
+
 
   const setupAudio = async (ctx: AudioContext) => {
     await ctx.audioWorklet.addModule("/sid-processor.js");
@@ -99,19 +140,19 @@ export default function Page() {
     };
   };
 
-  useEffect(() => {
-    return () => {
-      // Cleanup if needed
-      if (audioSocketRef.current) {
-        audioSocketRef.current.close();
-        audioSocketRef.current = null;
-      }
-      if (audioCtx) {
-        audioCtx.close();
-        setAudioCtx(null);
-      }
-    };
-  }, []);
+  // useEffect(() => {
+  //   return () => {
+  //     // Cleanup if needed
+  //     if (audioSocketRef.current) {
+  //       audioSocketRef.current.close();
+  //       audioSocketRef.current = null;
+  //     }
+  //     if (audioCtx) {
+  //       audioCtx.close();
+  //       setAudioCtx(null);
+  //     }
+  //   };
+  // }, []);
 
   const startAudio = async () => {
     if (audioCtx) return;
@@ -231,5 +272,22 @@ export default function Page() {
           }}
           />
       </div>
+
+      <div className="flex gap-3 w-[460px] items-baseline">
+
+      <CustomButton
+        ref={buttonRef}
+        text="Settings"
+        click={handleOpen}
+        className="ml-auto mt-5"
+      />
+      {isOpen && modalPos && (
+        <Modal onClose={() => setIsOpen(false)}>
+          <FormSettings position={modalPos} closeForm={() => setIsOpen(false)} />
+        </Modal>
+      )}
+      </div>
+
+
     </div>
   );}
