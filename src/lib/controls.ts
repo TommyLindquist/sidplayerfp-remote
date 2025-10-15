@@ -1,74 +1,117 @@
-
-import { RefObject, useState } from 'react';
+import { RefObject } from "react";
 
 export function getOverlayZones(
   send: (msg: string) => void,
+  sendUDPCommand: (cmd: string, ip: string) => void,
+  startImages: () => void,
   resetAudio: () => Promise<void>,
   audioNodeRef: RefObject<AudioWorkletNode | null>,
   audioCtx: AudioContext | null,
   audioSocketRef: RefObject<WebSocket | null>,
-  repeatChecked: RefObject<boolean>
+  repeatChecked: RefObject<boolean>,
+  sidplayerIp: string
 ) {
   return [
     {
-      id: 'play',
+      id: "play",
       topPx: 151,
       leftPx: 295,
       widthPx: 20,
       heightPx: 20,
       onClick: async () => {
         if (!audioCtx || !audioSocketRef.current) {
-          await resetAudio();
-          send('playpause');
+          await resetAudio(); // full restart
+          sendUDPCommand("replay", sidplayerIp);
+          startImages(); // safe to start images
         } else {
-          send('playpause');
+          send("playpause"); // toggle normally
         }
       },
     },
     {
-      id: 'stop',
+      id: "stop",
       topPx: 151,
       leftPx: 358,
       widthPx: 20,
       heightPx: 20,
-      onClick: () => send('stop'),
+      onClick: () => send("stop"),
     },
     {
-      id: 'stepforward',
+      id: "stepforward",
       topPx: 151,
       leftPx: 387,
       widthPx: 20,
       heightPx: 20,
       onClick: () => {
-        send('stepforward');
+        send("stepforward");
         setTimeout(() => {
-          audioNodeRef.current?.port.postMessage({ type: 'flush' });
+          audioNodeRef.current?.port.postMessage({ type: "flush" });
         }, 200);
       },
     },
     {
-      id: 'stepbackward',
+      id: "stepbackward",
       topPx: 151,
       leftPx: 263,
       widthPx: 20,
       heightPx: 20,
       onClick: () => {
-        send('stepbackward');
+        send("stepbackward");
         setTimeout(() => {
-          audioNodeRef.current?.port.postMessage({ type: 'flush' });
+          audioNodeRef.current?.port.postMessage({ type: "flush" });
         }, 200);
       },
     },
     {
-      id: 'repeat',
+      id: "repeat",
       topPx: 161,
       leftPx: 11,
       widthPx: 12,
       heightPx: 12,
       onClick: () => {
         repeatChecked.current = !repeatChecked.current;
-        send(`repeat${repeatChecked.current ? 'on' : 'off'}`);
+        send(`repeat${repeatChecked.current ? "on" : "off"}`);
       },
+    },
+    {
+      id: "mute0",
+      topPx: 155,
+      leftPx: 88,
+      widthPx: 20,
+      heightPx: 20,
+      onClick: () => send("mutesetting0"),
+    },
+    {
+      id: "mute1",
+      topPx: 155,
+      leftPx: 116,
+      widthPx: 21,
+      heightPx: 20,
+      onClick: () => send("mutesetting1"),
+    },
+    {
+      id: "mute2",
+      topPx: 155,
+      leftPx: 145,
+      widthPx: 21,
+      heightPx: 20,
+      onClick: () => send("mutesetting2"),
+    },
+    {
+      id: "mute3",
+      topPx: 155,
+      leftPx: 174,
+      widthPx: 21,
+      heightPx: 20,
+      onClick: () => send("mutesetting3"),
+    },
+    {
+      id: "mute4",
+      topPx: 155,
+      leftPx: 200,
+      widthPx: 24,
+      heightPx: 20,
+      onClick: () => send("mutesetting4"),
     },
   ];
 }
@@ -77,43 +120,42 @@ export function getMuteButtons(
   send: (msg: string) => void,
   useMuteSettingNumber: (nr: number) => void
 ) {
-
-    return [
+  return [
     {
-      bgColor: 'rgba(158, 0, 255, 255)',
+      bgColor: "rgba(158, 0, 255, 255)",
       click: () => {
-        send('mutesetting0');
+        send("mutesetting0");
         useMuteSettingNumber(0);
       },
     },
     {
-      bgColor: 'rgba(255, 176, 0, 23)',
+      bgColor: "rgba(255, 176, 0, 23)",
       click: () => {
-        send('mutesetting1');
+        send("mutesetting1");
         useMuteSettingNumber(1);
       },
     },
     {
-      bgColor: 'rgba(211, 140, 53, 33)',
+      bgColor: "rgba(211, 140, 53, 33)",
       click: () => {
-        send('mutesetting2');
+        send("mutesetting2");
         useMuteSettingNumber(2);
       },
     },
     {
-      bgColor: 'rgba(61, 255, 0, 23)',
+      bgColor: "rgba(61, 255, 0, 23)",
       click: () => {
-        send('mutesetting3');
+        send("mutesetting3");
         useMuteSettingNumber(3);
       },
     },
     {
-      bgColor: 'rgba(255, 255, 255, 123)',
+      bgColor: "rgba(255, 255, 255, 123)",
       click: () => {
-        send('mutesetting4');
+        send("mutesetting4");
         useMuteSettingNumber(4);
       },
-      className: 'text-black',
+      className: "text-black",
     },
   ];
 }

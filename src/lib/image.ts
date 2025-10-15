@@ -6,6 +6,12 @@ export function setupImageSocket(
   bufferSize: number,
   setImageUrl: (url: string) => void
 ) {
+
+  if (socketRef.current) {
+    socketRef.current.close();
+    socketRef.current.onmessage = null;
+  }
+
   const socket = new WebSocket("ws://localhost:3002/images");
   socketRef.current = socket;
 

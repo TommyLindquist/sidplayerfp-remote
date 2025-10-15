@@ -1,21 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { getSettingsFromCookie } from "./utils";
 import { Modal } from "./ui/modal";
 import FormSettings from "./ui/form-settings";
 import { CustomButton } from "@/components/custom-button";
-import { MuteSettingsButton } from "@/components/mute-settings-button";
 import { setupAudioNode } from '@/lib/audio';
 import { setupImageSocket } from '@/lib/image';
 import { sendUDPCommand } from '@/lib/udp';
 import { useSidSettings } from '@/hooks/useSidSettings';
 import { OverlayControls } from '@/components/overlay-controls';
 import { getOverlayZones, getMuteButtons } from '@/lib/controls';
-
+import { clearSidCookie } from "./utils";
 
 export default function Page() {
-  const { sidplayerIp, debugEnabled } = useSidSettings();
+  const { sidplayerIp, yourIp, debugEnabled } = useSidSettings();
   const [ipSent, setIpSent] = useState(false);
 
   const audioCtx = useRef<AudioContext | null>(null);
@@ -31,15 +29,15 @@ export default function Page() {
   const [isPrimed, setIsPrimed] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const repeatChecked = useRef(false);
-    const [muteSetting, setMuteSetting] = useState(["", "", "", "", ""]);
+  const [muteSetting, setMuteSetting] = useState(["", "", "", "", ""]);
   const useMuteSettingNumber = (nr: number) => {
     setMuteSetting(Array.from({ length: 5 }, (_, i) => (i === nr ? '*' : '')));
   };
 
-    const [modalPos, setModalPos] = useState<{ top: number; left: number } | null>(null);
+  const [modalPos, setModalPos] = useState<{ top: number; left: number } | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
-const handleOpen = () => {
+  const handleOpen = () => {
   const rect = buttonRef.current?.getBoundingClientRect();
   if (rect) {
     const centerX = rect.left + rect.width / 2 + window.scrollX;
@@ -49,15 +47,14 @@ const handleOpen = () => {
   }
 };
 
-  const currentIp = "127.0.0.1";
-    useEffect(() => {
-    if (!sidplayerIp || ipSent) return;
-    fetch('http://localhost:3003/set-ip', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ip: sidplayerIp }),
-    }).then(() => setIpSent(true));
-  }, [sidplayerIp, ipSent]);
+  useEffect(() => {
+  if (!sidplayerIp || ipSent) return;
+  fetch('http://localhost:3003/set-ip', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ip: sidplayerIp }),
+  }).then(() => setIpSent(true));
+}, [sidplayerIp, ipSent]);
 
   const startAudio = async () => {
     if (audioCtx.current) return;
@@ -72,13 +69,12 @@ const handleOpen = () => {
       setIsBuffering(buffering);
     });
 
-    sendUDPCommand(`getmusicatoff ${currentIp}`, sidplayerIp);
-    sendUDPCommand(`getmusicaton ${currentIp}`, sidplayerIp);
-    sendUDPCommand('playpause', sidplayerIp);
+    sendUDPCommand(`getmusicatoff ${yourIp}`, sidplayerIp);
+    sendUDPCommand(`getmusicaton ${yourIp}`, sidplayerIp);
   };
 
   const stopAudio = () => {
-    sendUDPCommand(`getmusicatoff ${currentIp}`, sidplayerIp);
+    sendUDPCommand(`getmusicatoff ${yourIp}`, sidplayerIp);
     sendUDPCommand('stop', sidplayerIp);
 
     audioSocketRef.current?.close();
@@ -101,13 +97,13 @@ const handleOpen = () => {
   };
 
   const startImages = () => {
-    sendUDPCommand(`getimagesatoff ${currentIp}`, sidplayerIp);
-    sendUDPCommand(`getimagesaton ${currentIp}`, sidplayerIp);
+    sendUDPCommand(`getimagesatoff ${yourIp}`, sidplayerIp);
+    sendUDPCommand(`getimagesaton ${yourIp}`, sidplayerIp);
     setupImageSocket(imageSocketRef, imageRingBuffer, bufferSize, setImageUrl);
   };
 
   const stopImages = () => {
-    sendUDPCommand(`getimagesatoff ${currentIp}`, sidplayerIp);
+    sendUDPCommand(`getimagesatoff ${yourIp}`, sidplayerIp);
     imageSocketRef.current?.close();
     imageSocketRef.current = null;
     setImageUrl(null);
@@ -115,61 +111,80 @@ const handleOpen = () => {
 
   const resetImages = async () => {
     stopImages();
-    await new Promise((r) => setTimeout(r, 200));
+    await new Promise((r) => setTimeout(r, 1000));
     startImages();
   };
 
-  const send = async (msg: string, justSend = false) => {
-    if (msg !== 'playpause') {
-      if (!justSend) {
-        if (msg === 'stop') {
-          stopAudio();
-          await new Promise((r) => setTimeout(r, 200));
-          audioNodeRef.current?.port.postMessage({ type: 'flush' });
-        } else if (!audioSocketRef.current || !audioCtx.current) {
-          await resetAudio();
-          audioNodeRef.current?.port.postMessage({ type: 'flush' });
-          send('playpause', true);
-          return;
-        }
+   const send = (msg: string) => {
 
-        if (!imageSocketRef.current) {
-          await resetImages();
-        }
-      }
+    if (!imageSocketRef.current) {
+          resetImages();
     }
+
+    if(msg === 'playpause'){
+      if (!audioSocketRef.current || !audioCtx.current) {
+        resetAudio();
+         audioCtx.current?.resume();
+        return;
+      }
+      sendUDPCommand(msg, sidplayerIp);
+      // give SID player time to switch tracks
+      setTimeout(() => {
+        audioNodeRef.current?.port.postMessage({ type: "flush" });
+      }, 200);
+            setTimeout(() => {
+        audioNodeRef.current?.port.postMessage({ type: "flush" });
+      }, 200);
+      return;
+    }
+
+    if (msg === 'stop') {
+      stopAudio();
+      audioNodeRef.current?.port.postMessage({ type: 'flush' });
+      sendUDPCommand(msg, sidplayerIp);
+      return;
+    }
+
     sendUDPCommand(msg, sidplayerIp);
   };
 
-
-
 const overlayZones = getOverlayZones(
   send,
+  sendUDPCommand,
+  startImages,
   resetAudio,
   audioNodeRef,
   audioCtx.current,
   audioSocketRef,
-  repeatChecked
+  repeatChecked,
+  sidplayerIp ?? ""
 );
 
 const muteSettingsButtons = getMuteButtons(send, useMuteSettingNumber);
 
-
   return (
     <div style={{ padding: 20 }}>
-      <h1>SID PlayerFP Remote</h1>
 
-      <div style={{ marginBottom: 20 }}>
+      {debugEnabled && (<aside>
+      <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#6750a4' }}>SID PlayerFP Remote debug</h1>
+      <div className="flex justify-between mb-[20px] mt-1 w-[300px]">
+        <div className="flex flex-col space-y-2">
         <button onClick={startAudio}>Start Audio</button>
-        <br />
         <button onClick={stopAudio}>Stop Audio</button>
-        <br />
         <button onClick={startImages}>Start Images</button>
-        <br />
         <button onClick={stopImages}>Stop Images</button>
-        <br />
         <button onClick={() => audioCtx.current?.resume()}>Resume Audio</button>
+        </div>
+        <div className="flex flex-col space-y-2 items-end">
+        <button onClick={resetImages}>Reset Images</button>
+        <button onClick={resetAudio}>Reset Audio</button>
+        <button onClick={() => send("replay")}>Send replay</button>
+        <button onClick={() => audioNodeRef.current?.port.postMessage({ type: "flush" })}>Flush buffer</button>
+        <button onClick={() => clearSidCookie()}>Delete cookie</button>
+        </div>
       </div>
+      </aside>)}
+      
       <section
         className="grid grid-rows-4 grid-cols-6 gap-1 w-[400px]"
         style={{
@@ -183,7 +198,9 @@ const muteSettingsButtons = getMuteButtons(send, useMuteSettingNumber);
       >
         <CustomButton
           text="Stop"
-          click={() => send("stop")}
+          click={() => {
+            send("stop"); 
+          }}
           styles={{ gridArea: "stop" }}
         />
         <CustomButton
@@ -201,7 +218,8 @@ const muteSettingsButtons = getMuteButtons(send, useMuteSettingNumber);
           click={async () => {
             if (!audioCtx || !audioSocketRef.current) {
               await resetAudio(); // full restart
-              send("playpause"); // safe to toggle ON
+              sendUDPCommand("replay", sidplayerIp);
+              startImages(); // safe to start images
             } else {
               send("playpause"); // toggle normally
             }
@@ -273,6 +291,7 @@ const muteSettingsButtons = getMuteButtons(send, useMuteSettingNumber);
           overlayZones={overlayZones}
           muteButtons={muteSettingsButtons}
           muteSetting={muteSetting}
+          debug={debugEnabled}
         />
       </div>
 

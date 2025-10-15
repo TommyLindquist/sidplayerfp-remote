@@ -20,14 +20,15 @@ type Props = {
   overlayZones: OverlayZone[];
   muteButtons: MuteButton[];
   muteSetting: string[];
+  debug: boolean;
 };
 
 export const OverlayControls: React.FC<Props> = ({
   overlayZones,
   muteButtons,
-  muteSetting
+  muteSetting,
+  debug
 }) => {
-
   return (
     <>
       {/* Overlay Zones */}
@@ -42,7 +43,7 @@ export const OverlayControls: React.FC<Props> = ({
             width: zone.widthPx,
             height: zone.heightPx,
             cursor: "pointer",
-            backgroundColor: "rgba(255,255,255,0.01)", // invisible but clickable
+            backgroundColor: debug ? "rgba(255,0,0,0.2)" : "transparent"
           }}
         />
       ))}

@@ -1,6 +1,6 @@
 export function getSettingsFromCookie() {
       if (typeof document === 'undefined') {
-    return { sidIp: '', debugEnabled: false };
+    return { sidIp: '', yourIp: '', debugEnabled: false };
   }
 
   const cookies = Object.fromEntries(
@@ -8,12 +8,13 @@ export function getSettingsFromCookie() {
   );
   return {
     sidIp: cookies.sidIp || "",
+    yourIp: cookies.yourIp || "",
     debugEnabled: cookies.debugEnabled === "true",
   };
 }
 
-export function clearSidCookie() {
-  document.cookie = "sidIp=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-  document.cookie =
-    "debugEnabled=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-}
+export const clearSidCookie = () =>
+  ["sidIp", "yourIp", "debugEnabled"].forEach((cookie) => document.cookie = `${cookie}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`);
+
+
+

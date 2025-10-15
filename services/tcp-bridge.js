@@ -75,13 +75,13 @@ function connectToPlayer() {
     } else {
       console.error('Audio socket error:', err.message);
     }
-    setTimeout(connectToPlayer, 1000);
+    setTimeout(connectToPlayer, 500);
   });
 
   audioSocket.on('end', () => {
     console.log('SID player audio stream ended');
     audioSocket = null;
-    setTimeout(connectToPlayer, 1000);
+    setTimeout(connectToPlayer, 500);
   });
 }
 
