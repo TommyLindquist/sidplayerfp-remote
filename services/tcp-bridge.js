@@ -1,7 +1,7 @@
-const net = require('net');
-const WebSocket = require('ws');
-const express = require('express');
-const cors = require('cors');
+const net = require("net");
+const WebSocket = require("ws");
+const express = require("express");
+const cors = require("cors");
 
 // Config
 const AUDIO_PORT = 11000;
@@ -22,35 +22,37 @@ const IMAGE_ERROR_INTERVAL = 10000;
 
 // WebSocket Server
 const wss = new WebSocket.Server({ port: WS_PORT });
-wss.on('connection', (ws, req) => {
-  if (req.url === '/audio') audioClients.push(ws);
-  else if (req.url === '/images') imageClients.push(ws);
+wss.on("connection", (ws, req) => {
+  if (req.url === "/audio") audioClients.push(ws);
+  else if (req.url === "/images") imageClients.push(ws);
 
-  ws.on('close', () => {
-    audioClients = audioClients.filter(c => c !== ws);
-    imageClients = imageClients.filter(c => c !== ws);
+  ws.on("close", () => {
+    audioClients = audioClients.filter((c) => c !== ws);
+    imageClients = imageClients.filter((c) => c !== ws);
   });
 });
 
 // Audio Stream
 function connectToPlayer() {
-  if (!PLAYER_IP) return console.log('Waiting for player IP...');
+  if (!PLAYER_IP) return console.log("Waiting for player IP...");
   if (audioSocket) return;
 
-  console.log(`Attempting to connect to SID player at ${PLAYER_IP}:${AUDIO_PORT}...`);
+  console.log(
+    `Attempting to connect to SID player at ${PLAYER_IP}:${AUDIO_PORT}...`
+  );
   audioSocket = net.connect(AUDIO_PORT, PLAYER_IP, () => {
-    console.log('Connected to SID player audio stream');
+    console.log("Connected to SID player audio stream");
   });
 
   let buffer = Buffer.alloc(0);
 
-  audioSocket.on('data', chunk => {
+  audioSocket.on("data", (chunk) => {
     buffer = Buffer.concat([buffer, chunk]);
 
     while (buffer.length >= 4) {
       const musicSize = buffer.readUInt32LE(0);
       if (musicSize < 1 || musicSize > 65536) {
-        console.warn('Invalid musicSize:', musicSize);
+        console.warn("Invalid musicSize:", musicSize);
         buffer = buffer.subarray(4);
         continue;
       }
@@ -60,50 +62,55 @@ function connectToPlayer() {
       const musicData = buffer.subarray(4, 4 + musicSize);
       buffer = buffer.subarray(4 + musicSize);
 
-      audioClients.forEach(ws => {
+      audioClients.forEach((ws) => {
         if (ws.readyState === WebSocket.OPEN) ws.send(musicData);
       });
     }
   });
 
-  audioSocket.on('error', err => {
+  audioSocket.on("error", (err) => {
     audioSocket = null;
     const now = Date.now();
-    if (err.code === 'ECONNREFUSED' && now - lastAudioErrorTime > AUDIO_ERROR_INTERVAL) {
-      console.log('Idle ...');
+    if (
+      err.code === "ECONNREFUSED" &&
+      now - lastAudioErrorTime > AUDIO_ERROR_INTERVAL
+    ) {
+      console.log("Idle ...");
       lastAudioErrorTime = now;
     } else {
-      console.error('Audio socket error:', err.message);
+      console.error("Audio socket error:", err.message);
     }
-    setTimeout(connectToPlayer, 1000);
+    setTimeout(connectToPlayer, 500);
   });
 
-  audioSocket.on('end', () => {
-    console.log('SID player audio stream ended');
+  audioSocket.on("end", () => {
+    console.log("SID player audio stream ended");
     audioSocket = null;
-    setTimeout(connectToPlayer, 1000);
+    setTimeout(connectToPlayer, 500);
   });
 }
 
 // Image Stream
 function connectToImageStream() {
-  if (!PLAYER_IP) return console.log('Waiting for player IP...');
+  if (!PLAYER_IP) return console.log("Waiting for player IP...");
   if (imageSocket) return;
 
-  console.log(`Connecting to SID player image stream at ${PLAYER_IP}:${IMAGE_PORT}...`);
+  console.log(
+    `Connecting to SID player image stream at ${PLAYER_IP}:${IMAGE_PORT}...`
+  );
   imageSocket = net.connect(IMAGE_PORT, PLAYER_IP, () => {
-    console.log('Connected to SID player image stream');
+    console.log("Connected to SID player image stream");
   });
 
   let buffer = Buffer.alloc(0);
 
-  imageSocket.on('data', chunk => {
+  imageSocket.on("data", (chunk) => {
     buffer = Buffer.concat([buffer, chunk]);
 
     while (buffer.length >= 4) {
       const imageSize = buffer.readUInt32LE(0);
       if (imageSize < 1 || imageSize > 2_000_000) {
-        console.warn('Invalid imageSize:', imageSize);
+        console.warn("Invalid imageSize:", imageSize);
         buffer = buffer.subarray(4);
         continue;
       }
@@ -113,29 +120,32 @@ function connectToImageStream() {
       const imageData = buffer.subarray(4, 4 + imageSize);
       buffer = buffer.subarray(4 + imageSize);
 
-      const base64 = imageData.toString('base64');
+      const base64 = imageData.toString("base64");
       const dataUrl = `data:image/jpeg;base64,${base64}`;
 
-      imageClients.forEach(ws => {
+      imageClients.forEach((ws) => {
         if (ws.readyState === WebSocket.OPEN) ws.send(dataUrl);
       });
     }
   });
 
-  imageSocket.on('error', err => {
+  imageSocket.on("error", (err) => {
     imageSocket = null;
     const now = Date.now();
-    if (err.code === 'ECONNREFUSED' && now - lastImageErrorTime > IMAGE_ERROR_INTERVAL) {
-      console.log('Idle ...');
+    if (
+      err.code === "ECONNREFUSED" &&
+      now - lastImageErrorTime > IMAGE_ERROR_INTERVAL
+    ) {
+      console.log("Idle ...");
       lastImageErrorTime = now;
     } else {
-      console.error('Image socket error:', err.message);
+      console.error("Image socket error:", err.message);
     }
     setTimeout(connectToImageStream, 1000);
   });
 
-  imageSocket.on('end', () => {
-    console.log('SID player image stream ended');
+  imageSocket.on("end", () => {
+    console.log("SID player image stream ended");
     imageSocket = null;
     setTimeout(connectToImageStream, 1000);
   });
@@ -146,9 +156,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.post('/set-ip', (req, res) => {
+app.post("/set-ip", (req, res) => {
   const { ip } = req.body;
-  if (!ip) return res.status(400).send('Missing IP');
+  if (!ip) return res.status(400).send("Missing IP");
 
   if (PLAYER_IP === ip) {
     return res.status(200).send(`Player IP already set to ${ip}`);

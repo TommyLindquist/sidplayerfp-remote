@@ -1,4 +1,5 @@
 export class RingBuffer {
+  // Customized for 2-channels in stereo
   constructor(size) {
     this.size = size;
     this.left = new Float32Array(size);
@@ -31,6 +32,7 @@ export class RingBuffer {
       }
     }
   }
+  // status of ringbuffer health
   get fillRatio() {
     return this.available / this.size;
   }
