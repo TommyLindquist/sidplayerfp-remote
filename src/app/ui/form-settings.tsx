@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getSettingsFromCookie } from "../utils";
+import { getSettingsFromCookie, validateIp } from "../utils";
 
 export default function FormSettings({
   position,
@@ -53,6 +53,7 @@ export default function FormSettings({
           value={ip}
           className="border p-2"
           onChange={(e) => setIp(e.target.value)}
+          required pattern={validateIp}
         />
        <label htmlFor="yourIpaddress">Enter your public IP address:</label>
         <input
@@ -64,6 +65,7 @@ export default function FormSettings({
           value={yourIp}
           className="border p-2"
           onChange={(e) => setYourIp(e.target.value)}
+          required pattern={validateIp}
         />
         <div className="flex gap-2">
           <label htmlFor="enableDebug">Enable debug:</label>
