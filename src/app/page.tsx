@@ -29,11 +29,6 @@ export default function Page() {
   const [isPrimed, setIsPrimed] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const repeatChecked = useRef(false);
-  const [muteSetting, setMuteSetting] = useState(["", "", "", "", ""]);
-  const useMuteSettingNumber = (nr: number) => {
-    setMuteSetting(Array.from({ length: 5 }, (_, i) => (i === nr ? '*' : '')));
-  };
-
   const [modalPos, setModalPos] = useState<{ top: number; left: number } | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -160,13 +155,14 @@ const overlayZones = getOverlayZones(
   sidplayerIp ?? ""
 );
 
-const muteSettingsButtons = getMuteButtons(send, useMuteSettingNumber);
+const muteSettingsButtons = getMuteButtons(send);
 
   return (
     <div style={{ padding: 20 }}>
 
-      {debugEnabled && (<aside>
-      <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#6750a4' }}>SID PlayerFP Remote debug</h1>
+      {debugEnabled && (<aside className="w-[460px]">
+      <h1 className="flex justify-center" style={{ fontSize: '24px', fontWeight: 'bold', color: '#6750a4' }}>SID PlayerFP Remote debug</h1>
+      <div className="flex justify-center">
       <div className="flex justify-between mb-[20px] mt-1 w-[300px]">
         <div className="flex flex-col space-y-2">
         <button onClick={startAudio}>Start Audio</button>
@@ -183,10 +179,11 @@ const muteSettingsButtons = getMuteButtons(send, useMuteSettingNumber);
         <button onClick={() => clearSidCookie()}>Delete cookie</button>
         </div>
       </div>
+      </div>
       </aside>)}
       
       <section
-        className="grid grid-rows-4 grid-cols-6 gap-1 w-[400px]"
+        className="grid grid-rows-4 grid-cols-6 gap-1 w-[460px]"
         style={{
           gridTemplateAreas: `
               ". . stop stop . ."
@@ -290,7 +287,6 @@ const muteSettingsButtons = getMuteButtons(send, useMuteSettingNumber);
         <OverlayControls
           overlayZones={overlayZones}
           muteButtons={muteSettingsButtons}
-          muteSetting={muteSetting}
           debug={debugEnabled}
         />
       </div>
@@ -337,6 +333,5 @@ const muteSettingsButtons = getMuteButtons(send, useMuteSettingNumber);
             : "⏳ Waiting for buffer…"}
         </div>
         </div>
-
     </div>
   );}

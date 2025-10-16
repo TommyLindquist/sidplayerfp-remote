@@ -27,6 +27,8 @@ class SIDProcessor extends AudioWorkletProcessor {
   process(_, outputs) {
 
     const output = outputs[0];
+    // We get buffers handed to us to fill with audio data, 
+    // it then plays this internally. nothing more is required from our part by this stage ...
     const leftOut = output[0];
     const rightOut = output[1];
 
@@ -37,7 +39,7 @@ class SIDProcessor extends AudioWorkletProcessor {
       if (this.buffer.available >= this.primingThreshold) {
         this.playbackState = "playing";
       } else {
-        for (let i = 0; i < leftOut.length; i++) {
+        for (let i = 0; i < leftOut.length; i++) { // play silence while buffering
           leftOut[i] = 0;
           rightOut[i] = 0;
         }
@@ -49,7 +51,7 @@ class SIDProcessor extends AudioWorkletProcessor {
     // If buffer drops below 2048, re-enter buffering
     if (this.buffer.available < 2048) {
       this.playbackState = "buffering";
-      for (let i = 0; i < leftOut.length; i++) {
+      for (let i = 0; i < leftOut.length; i++) { // play silence while buffering
         leftOut[i] = 0;
         rightOut[i] = 0;
       }
@@ -58,7 +60,7 @@ class SIDProcessor extends AudioWorkletProcessor {
     }
 
     // Normal playback
-    this.buffer.pull(leftOut, rightOut);
+    this.buffer.pull(leftOut, rightOut); // pull raw PCM audio data from buffer into left and right channel and plays it.
     this.sendStatus();
     return true;
   }

@@ -5,8 +5,8 @@ export function MuteSettingsButton({
     className,
     styles
 }:{
-    text: string;
-    click: () => void;
+    text?: string;
+    click: (e: React.MouseEvent<HTMLButtonElement>) => void;
     bgColor: string;
     className?: string;
     styles?: React.CSSProperties;
@@ -19,12 +19,13 @@ return <button
     height: 15,
     ...(typeof styles === 'object' && styles !== null ? styles : {})
  }}
- onClick={() => click()}
+ onClick={(e: React.MouseEvent<HTMLButtonElement>) => click(e)}
  >
+{text &&
 <span className="relative top-[-3] text-2xl">
     {text}
 </span>
-
+}
 </button>
 
 } 

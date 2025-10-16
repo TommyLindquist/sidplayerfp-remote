@@ -12,21 +12,19 @@ type OverlayZone = {
 
 type MuteButton = {
   bgColor: string;
-  click: () => void;
+  click: (e: React.MouseEvent<HTMLButtonElement>) => void;
   className?: string;
 };
 
 type Props = {
   overlayZones: OverlayZone[];
   muteButtons: MuteButton[];
-  muteSetting: string[];
   debug: boolean;
 };
 
 export const OverlayControls: React.FC<Props> = ({
   overlayZones,
   muteButtons,
-  muteSetting,
   debug
 }) => {
   return (
@@ -53,7 +51,6 @@ export const OverlayControls: React.FC<Props> = ({
         {muteButtons.map((mb, idx) => (
           <MuteSettingsButton
               key={idx}
-              text={muteSetting[idx]}
               bgColor={mb.bgColor}
               click={mb.click}
               className={mb.className}

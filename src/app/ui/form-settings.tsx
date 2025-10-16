@@ -30,7 +30,7 @@ export default function FormSettings({
         zIndex: 1000,
         padding: "1rem",
       }}
-      className="bg-black/88"
+      className="bg-green-400/88"
     >
       <form
         className="grid gap-2 bg-purple-950/40 m-2 p-5"

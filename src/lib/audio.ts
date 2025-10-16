@@ -40,8 +40,8 @@ export async function setupAudioNode(
     const right = new Float32Array(samples);
 
     for (let i = 0; i < samples; i++) {
-      left[i] = raw.getInt16(i * 4, true) / 32768;
-      right[i] = raw.getInt16(i * 4 + 2, true) / 32768;
+      left[i] = raw.getInt16(i * 4, true) / 32768; // Normalize 16-bit
+      right[i] = raw.getInt16(i * 4 + 2, true) / 32768; // Normalize 16-bit
     }
 
     node.port.postMessage({ left, right });

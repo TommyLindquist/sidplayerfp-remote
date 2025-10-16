@@ -1,3 +1,4 @@
+import { burstClick } from "@/app/utils";
 import { RefObject } from "react";
 
 export function getOverlayZones(
@@ -12,6 +13,14 @@ export function getOverlayZones(
   sidplayerIp: string
 ) {
   return [
+    {
+      id: "display",
+      topPx: 35,
+      leftPx: 10,
+      widthPx: 213,
+      heightPx: 118,
+      onClick: () => send("displayclick"),
+    },  
     {
       id: "play",
       topPx: 151,
@@ -112,49 +121,33 @@ export function getOverlayZones(
       widthPx: 24,
       heightPx: 20,
       onClick: () => send("mutesetting4"),
-    },
+    },  
   ];
 }
 
 export function getMuteButtons(
-  send: (msg: string) => void,
-  useMuteSettingNumber: (nr: number) => void
+  send: (msg: string) => void
 ) {
   return [
     {
       bgColor: "rgba(158, 0, 255, 255)",
-      click: () => {
-        send("mutesetting0");
-        useMuteSettingNumber(0);
-      },
+      click: (e: React.MouseEvent<HTMLButtonElement>) => burstClick(e, () => send("mutesetting0")),
     },
     {
       bgColor: "rgba(255, 176, 0, 23)",
-      click: () => {
-        send("mutesetting1");
-        useMuteSettingNumber(1);
-      },
+      click: (e: React.MouseEvent<HTMLButtonElement>) => burstClick(e, () => send("mutesetting1")),
     },
     {
       bgColor: "rgba(211, 140, 53, 33)",
-      click: () => {
-        send("mutesetting2");
-        useMuteSettingNumber(2);
-      },
+      click: (e: React.MouseEvent<HTMLButtonElement>) => burstClick(e, () => send("mutesetting2")),
     },
     {
       bgColor: "rgba(61, 255, 0, 23)",
-      click: () => {
-        send("mutesetting3");
-        useMuteSettingNumber(3);
-      },
+      click: (e: React.MouseEvent<HTMLButtonElement>) => burstClick(e, () => send("mutesetting3")),
     },
     {
       bgColor: "rgba(255, 255, 255, 123)",
-      click: () => {
-        send("mutesetting4");
-        useMuteSettingNumber(4);
-      },
+      click: (e: React.MouseEvent<HTMLButtonElement>) => burstClick(e, () => send("mutesetting4")),
       className: "text-black",
     },
   ];
