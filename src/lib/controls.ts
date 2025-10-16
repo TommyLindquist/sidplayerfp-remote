@@ -20,7 +20,7 @@ export function getOverlayZones(
       widthPx: 213,
       heightPx: 118,
       onClick: () => send("displayclick"),
-    },  
+    },
     {
       id: "play",
       topPx: 151,
@@ -121,33 +121,36 @@ export function getOverlayZones(
       widthPx: 24,
       heightPx: 20,
       onClick: () => send("mutesetting4"),
-    },  
+    },
   ];
 }
 
-export function getMuteButtons(
-  send: (msg: string) => void
-) {
+export function getMuteButtons(send: (msg: string) => void) {
   return [
     {
       bgColor: "rgba(158, 0, 255, 255)",
-      click: (e: React.MouseEvent<HTMLButtonElement>) => burstClick(e, () => send("mutesetting0")),
+      click: (e: React.MouseEvent<HTMLButtonElement>) =>
+        burstClick(e, () => send("mutesetting0")),
     },
     {
       bgColor: "rgba(255, 176, 0, 23)",
-      click: (e: React.MouseEvent<HTMLButtonElement>) => burstClick(e, () => send("mutesetting1")),
+      click: (e: React.MouseEvent<HTMLButtonElement>) =>
+        burstClick(e, () => send("mutesetting1")),
     },
     {
       bgColor: "rgba(211, 140, 53, 33)",
-      click: (e: React.MouseEvent<HTMLButtonElement>) => burstClick(e, () => send("mutesetting2")),
+      click: (e: React.MouseEvent<HTMLButtonElement>) =>
+        burstClick(e, () => send("mutesetting2")),
     },
     {
       bgColor: "rgba(61, 255, 0, 23)",
-      click: (e: React.MouseEvent<HTMLButtonElement>) => burstClick(e, () => send("mutesetting3")),
+      click: (e: React.MouseEvent<HTMLButtonElement>) =>
+        burstClick(e, () => send("mutesetting3")),
     },
     {
       bgColor: "rgba(255, 255, 255, 123)",
-      click: (e: React.MouseEvent<HTMLButtonElement>) => burstClick(e, () => send("mutesetting4")),
+      click: (e: React.MouseEvent<HTMLButtonElement>) =>
+        burstClick(e, () => send("mutesetting4")),
       className: "text-black",
     },
   ];

@@ -1,6 +1,18 @@
 import { clearSidCookie } from "@/app/utils";
 import { RefObject } from "react";
 
+export type propsTypes = {
+  startAudio: () => Promise<void>;
+  stopAudio: () => void;
+  startImages: () => void;
+  stopImages: () => void;
+  audioCtx: RefObject<AudioContext | null>;
+  resetImages: () => Promise<void>;
+  resetAudio: () => Promise<void>;
+  send: (msg: string) => void;
+  audioNodeRef: RefObject<AudioWorkletNode | null>;
+};
+
 export default function Debug({
   startAudio,
   stopAudio,
@@ -11,17 +23,7 @@ export default function Debug({
   resetAudio,
   send,
   audioNodeRef,
-}: {
-  startAudio: () => Promise<void>;
-  stopAudio: () => void;
-  startImages: () => void;
-  stopImages: () => void;
-  audioCtx: RefObject<AudioContext | null>;
-  resetImages: () => Promise<void>;
-  resetAudio: () => Promise<void>;
-  send: (msg: string) => void;
-  audioNodeRef: RefObject<AudioWorkletNode | null>;
-}) {
+}: propsTypes) {
   return (
     <aside className="w-[460px]">
       <h1

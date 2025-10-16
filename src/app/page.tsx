@@ -8,13 +8,13 @@ import { sendUDPCommand } from "@/lib/udp";
 import { useSidSettings } from "@/hooks/useSidSettings";
 import { OverlayControls } from "@/components/overlay-controls";
 import { getOverlayZones, getMuteButtons } from "@/lib/controls";
-import { handleOpen } from "./utils";
+import { handleOpen, sendIp } from "./utils";
 import LayoutPlayerButtons from "./ui/layout-player-buttons";
 import BufferIndicator from "@/components/buffer-indicator";
 import Debug from "@/components/debug";
-import { useSidCommands } from "@/lib/useSidCommands";
+import { useSidCommands } from "@/hooks/useSidCommands";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
-import { useImageStream } from "@/lib/useImageStream";
+import { useImageStream } from "@/hooks/useImageStream";
 
 export default function Page() {
   const { sidplayerIp, yourIp, debugEnabled } = useSidSettings();
@@ -30,11 +30,7 @@ export default function Page() {
   useEffect(() => {
     // Send player IP to tcp-bridge
     if (!sidplayerIp || ipSent) return;
-    fetch("http://localhost:3003/set-ip", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ip: sidplayerIp }),
-    }).then(() => setIpSent(true));
+    (async () => await sendIp(sidplayerIp, (res) => setIpSent(res)))();
   }, [sidplayerIp, ipSent]);
 
   const {
@@ -60,6 +56,7 @@ export default function Page() {
     imageSocketRef,
     resetAudio,
     resetImages,
+    stopAudio,
   });
 
   const overlayZones = getOverlayZones(

@@ -50,15 +50,17 @@ export const burstClick = (
 
 export const validateIp = "^([0-9]{1,3}.){3}[0-9]{1,3}$";
 
+export type handleOpenPropsTypes = {
+  buttonRef: RefObject<HTMLButtonElement | null>;
+  setModalPos: Dispatch<SetStateAction<{ top: number; left: number } | null>>;
+  setIsOpen: Dispatch<SetStateAction<boolean>>;
+};
+
 export const handleOpen = ({
   buttonRef,
   setModalPos,
   setIsOpen,
-}: {
-  buttonRef: RefObject<HTMLButtonElement | null>;
-  setModalPos: Dispatch<SetStateAction<{ top: number; left: number } | null>>;
-  setIsOpen: Dispatch<SetStateAction<boolean>>;
-}) => {
+}: handleOpenPropsTypes) => {
   const rect = buttonRef.current?.getBoundingClientRect();
   if (rect) {
     const centerX = rect.left + rect.width / 2 + window.scrollX;
@@ -66,4 +68,16 @@ export const handleOpen = ({
     setModalPos({ top: centerY, left: centerX });
     setIsOpen(true);
   }
+};
+
+export const sendIp = async (
+  sidplayerIp: string | null,
+  callback: (res: boolean) => void
+) => {
+  await fetch("http://localhost:3003/set-ip", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ip: sidplayerIp }),
+  });
+  callback(true);
 };

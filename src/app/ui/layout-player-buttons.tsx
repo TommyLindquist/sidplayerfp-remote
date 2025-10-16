@@ -1,27 +1,29 @@
 import { CustomButton } from "@/components/custom-button";
 import { RefObject } from "react";
 
+export type propsTypes = {
+  send: (msg: string) => void;
+  audioNodeRef: RefObject<AudioWorkletNode | null>;
+  resetAudio: () => Promise<void>;
+  sendUDPCommand: (cmd: string, targetIP: string | null) => void;
+  audioCtx: RefObject<AudioContext | null>;
+  audioSocketRef: RefObject<WebSocket | null>;
+  sidplayerIp: string | null;
+  startImages: () => void;
+  repeatChecked: RefObject<boolean>;
+}
+
 export default function LayoutPlayerButtons({
-    send,
-    audioNodeRef,
-    resetAudio,
-    sendUDPCommand,
-    audioCtx,
-    audioSocketRef,
-    sidplayerIp,
-    startImages,
-    repeatChecked,
-}:{
-    send: (msg: string) => void;
-    audioNodeRef: RefObject<AudioWorkletNode | null>;
-    resetAudio: () => Promise<void>;
-    sendUDPCommand: (cmd: string, targetIP: string | null) => void;
-    audioCtx: RefObject<AudioContext | null>;
-    audioSocketRef: RefObject<WebSocket | null>
-    sidplayerIp: string | null;
-    startImages: () => void;
-    repeatChecked: RefObject<boolean>;
-}) {
+  send,
+  audioNodeRef,
+  resetAudio,
+  sendUDPCommand,
+  audioCtx,
+  audioSocketRef,
+  sidplayerIp,
+  startImages,
+  repeatChecked,
+}: propsTypes) {
   return (
     <>
       <CustomButton
@@ -44,7 +46,7 @@ export default function LayoutPlayerButtons({
       <CustomButton
         text="Play / Pause"
         click={async () => {
-          if (!audioCtx || !audioSocketRef.current) {
+          if (!audioCtx.current || !audioSocketRef.current) {
             await resetAudio(); // full restart
             sendUDPCommand("replay", sidplayerIp);
             startImages(); // safe to start images

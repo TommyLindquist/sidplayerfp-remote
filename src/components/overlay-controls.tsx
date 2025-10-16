@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { MuteSettingsButton } from "./mute-settings-button";
 
-type OverlayZone = {
+export type OverlayZone = {
   id: string;
   topPx: number;
   leftPx: number;
@@ -25,7 +25,7 @@ type Props = {
 export const OverlayControls: React.FC<Props> = ({
   overlayZones,
   muteButtons,
-  debug
+  debug,
 }) => {
   return (
     <>
@@ -41,7 +41,7 @@ export const OverlayControls: React.FC<Props> = ({
             width: zone.widthPx,
             height: zone.heightPx,
             cursor: "pointer",
-            backgroundColor: debug ? "rgba(255,0,0,0.2)" : "transparent"
+            backgroundColor: debug ? "rgba(255,0,0,0.2)" : "transparent",
           }}
         />
       ))}
@@ -50,13 +50,12 @@ export const OverlayControls: React.FC<Props> = ({
       <div className="flex gap-2 mt-4">
         {muteButtons.map((mb, idx) => (
           <MuteSettingsButton
-              key={idx}
-              bgColor={mb.bgColor}
-              click={mb.click}
-              className={mb.className}
-              styles={("styles" in mb && mb.styles) || {}}
-          >
-          </MuteSettingsButton>
+            key={idx}
+            bgColor={mb.bgColor}
+            click={mb.click}
+            className={mb.className}
+            styles={("styles" in mb && mb.styles) || {}}
+          ></MuteSettingsButton>
         ))}
       </div>
     </>

@@ -1,4 +1,15 @@
-import { sendUDPCommand } from "./udp";
+import { sendUDPCommand } from "../lib/udp";
+
+export type propsTypes = {
+  sidplayerIp: string | null;
+  audioCtx: React.RefObject<AudioContext | null>;
+  audioNodeRef: React.RefObject<AudioWorkletNode | null>;
+  audioSocketRef: React.RefObject<WebSocket | null>;
+  imageSocketRef: React.RefObject<WebSocket | null>;
+  resetAudio: () => Promise<void>;
+  resetImages: () => Promise<void>;
+  stopAudio: () => void;
+};
 
 export function useSidCommands({
   sidplayerIp,
@@ -8,15 +19,8 @@ export function useSidCommands({
   imageSocketRef,
   resetAudio,
   resetImages,
-}: {
-  sidplayerIp: string | null;
-  audioCtx: React.RefObject<AudioContext | null>;
-  audioNodeRef: React.RefObject<AudioWorkletNode | null>;
-  audioSocketRef: React.RefObject<WebSocket | null>;
-  imageSocketRef: React.RefObject<WebSocket | null>;
-  resetAudio: () => Promise<void>;
-  resetImages: () => Promise<void>;
-}) {
+  stopAudio
+}: propsTypes) {
   const send = (msg: string) => {
     if (!imageSocketRef.current) {
       resetImages();
@@ -32,11 +36,12 @@ export function useSidCommands({
       setTimeout(() => {
         audioNodeRef.current?.port.postMessage({ type: "flush" });
       }, 200);
+      
       return;
     }
 
     if (msg === "stop") {
-      resetAudio(); // or stopAudio() if you prefer
+      stopAudio();
       audioNodeRef.current?.port.postMessage({ type: "flush" });
       sendUDPCommand(msg, sidplayerIp);
       return;

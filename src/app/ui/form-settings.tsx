@@ -53,9 +53,10 @@ export default function FormSettings({
           value={ip}
           className="border p-2"
           onChange={(e) => setIp(e.target.value)}
-          required pattern={validateIp}
+          required
+          pattern={validateIp}
         />
-       <label htmlFor="yourIpaddress">Enter your public IP address:</label>
+        <label htmlFor="yourIpaddress">Enter your public IP address:</label>
         <input
           type="text"
           id="yourIpaddress"
@@ -65,7 +66,8 @@ export default function FormSettings({
           value={yourIp}
           className="border p-2"
           onChange={(e) => setYourIp(e.target.value)}
-          required pattern={validateIp}
+          required
+          pattern={validateIp}
         />
         <div className="flex gap-2">
           <label htmlFor="enableDebug">Enable debug:</label>
@@ -79,12 +81,16 @@ export default function FormSettings({
           />
         </div>
         <div className="flex gap-2 flex-nowrap">
-        <button type="submit" className="justify-self-start cursor-pointer">
-          OK
-        </button>
-        <button type="button" className="ml-auto cursor-pointer" onClick={closeForm}>
-          Cancel
-        </button>
+          <button type="submit" className="justify-self-start cursor-pointer">
+            OK
+          </button>
+          <button
+            type="button"
+            className="ml-auto cursor-pointer"
+            onClick={closeForm}
+          >
+            Cancel
+          </button>
         </div>
       </form>
     </div>

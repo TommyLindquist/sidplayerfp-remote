@@ -1,6 +1,6 @@
+import { setupImageSocket } from "@/lib/image";
+import { sendUDPCommand } from "@/lib/udp";
 import { useRef, useState } from "react";
-import { sendUDPCommand } from "./udp";
-import { setupImageSocket } from "./image";
 
 export function useImageStream(
   sidplayerIp: string | null,

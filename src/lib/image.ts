@@ -6,7 +6,6 @@ export function setupImageSocket(
   bufferSize: number,
   setImageUrl: (url: string) => void
 ) {
-
   if (socketRef.current) {
     socketRef.current.close();
     socketRef.current.onmessage = null;

@@ -1,12 +1,14 @@
+export type propsTypes = {
+  bufferFill: number;
+  isBuffering: boolean;
+  isPrimed: boolean;
+};
+
 export default function BufferIndicator({
   bufferFill,
   isBuffering,
   isPrimed,
-}: {
-  bufferFill: number;
-  isBuffering: boolean;
-  isPrimed: boolean;
-}) {
+}: propsTypes) {
   return (
     <div className="mt-[20px] w-[460px]">
       <label>Buffer Fill:</label>

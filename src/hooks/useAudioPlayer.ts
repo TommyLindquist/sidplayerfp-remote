@@ -21,7 +21,7 @@ export function useAudioPlayer(
     audioCtx.current = ctx;
 
     await setupAudioNode(
-      ctx,
+      audioCtx.current,
       audioNodeRef,
       audioSocketRef,
       ({ fillRatio, isPrimed, buffering }) => {
