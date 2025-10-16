@@ -4,8 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { Modal } from "./ui/modal";
 import FormSettings from "./ui/form-settings";
 import { CustomButton } from "@/components/custom-button";
-import { setupAudioNode } from "@/lib/audio";
-import { setupImageSocket } from "@/lib/image";
 import { sendUDPCommand } from "@/lib/udp";
 import { useSidSettings } from "@/hooks/useSidSettings";
 import { OverlayControls } from "@/components/overlay-controls";
@@ -14,20 +12,13 @@ import { handleOpen } from "./utils";
 import LayoutPlayerButtons from "./ui/layout-player-buttons";
 import BufferIndicator from "@/components/buffer-indicator";
 import Debug from "@/components/debug";
+import { useSidCommands } from "@/lib/useSidCommands";
+import { useAudioPlayer } from "@/hooks/useAudioPlayer";
+import { useImageStream } from "@/lib/useImageStream";
 
 export default function Page() {
   const { sidplayerIp, yourIp, debugEnabled } = useSidSettings();
   const [ipSent, setIpSent] = useState(false);
-  const audioCtx = useRef<AudioContext | null>(null);
-  const audioNodeRef = useRef<AudioWorkletNode | null>(null);
-  const audioSocketRef = useRef<WebSocket | null>(null);
-  const imageSocketRef = useRef<WebSocket | null>(null);
-  const imageRingBuffer = useRef<string[]>([]);
-  const bufferSize = 300;
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [bufferFill, setBufferFill] = useState(0);
-  const [isPrimed, setIsPrimed] = useState(false);
-  const [isBuffering, setIsBuffering] = useState(false);
   const repeatChecked = useRef(false);
   const [modalPos, setModalPos] = useState<{
     top: number;
@@ -37,6 +28,7 @@ export default function Page() {
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
+    // Send player IP to tcp-bridge
     if (!sidplayerIp || ipSent) return;
     fetch("http://localhost:3003/set-ip", {
       method: "POST",
@@ -45,101 +37,30 @@ export default function Page() {
     }).then(() => setIpSent(true));
   }, [sidplayerIp, ipSent]);
 
-  const startAudio = async () => {
-    if (audioCtx.current) return;
+  const {
+    audioCtx,
+    audioNodeRef,
+    audioSocketRef,
+    startAudio,
+    stopAudio,
+    resetAudio,
+    bufferFill,
+    isPrimed,
+    isBuffering,
+  } = useAudioPlayer(sidplayerIp, yourIp);
 
-    const ctx = new AudioContext({ sampleRate: 48000 });
-    if (ctx.state === "suspended") await ctx.resume();
-    audioCtx.current = ctx;
+  const { imageSocketRef, imageUrl, startImages, stopImages, resetImages } =
+    useImageStream(sidplayerIp, yourIp);
 
-    await setupAudioNode(
-      ctx,
-      audioNodeRef,
-      audioSocketRef,
-      ({ fillRatio, isPrimed, buffering }) => {
-        setBufferFill(fillRatio);
-        setIsPrimed(isPrimed);
-        setIsBuffering(buffering);
-      }
-    );
-
-    sendUDPCommand(`getmusicatoff ${yourIp}`, sidplayerIp);
-    sendUDPCommand(`getmusicaton ${yourIp}`, sidplayerIp);
-  };
-
-  const stopAudio = () => {
-    sendUDPCommand(`getmusicatoff ${yourIp}`, sidplayerIp);
-    sendUDPCommand("stop", sidplayerIp);
-
-    audioSocketRef.current?.close();
-    audioSocketRef.current = null;
-
-    audioNodeRef.current?.disconnect();
-    audioNodeRef.current = null;
-
-    audioCtx.current?.close();
-    audioCtx.current = null;
-
-    setIsPrimed(false);
-    setBufferFill(0);
-  };
-
-  const resetAudio = async () => {
-    stopAudio();
-    await new Promise((r) => setTimeout(r, 200));
-    await startAudio();
-  };
-
-  const startImages = () => {
-    sendUDPCommand(`getimagesatoff ${yourIp}`, sidplayerIp);
-    sendUDPCommand(`getimagesaton ${yourIp}`, sidplayerIp);
-    setupImageSocket(imageSocketRef, imageRingBuffer, bufferSize, setImageUrl);
-  };
-
-  const stopImages = () => {
-    sendUDPCommand(`getimagesatoff ${yourIp}`, sidplayerIp);
-    imageSocketRef.current?.close();
-    imageSocketRef.current = null;
-    setImageUrl(null);
-  };
-
-  const resetImages = async () => {
-    stopImages();
-    await new Promise((r) => setTimeout(r, 1000));
-    startImages();
-  };
-
-  const send = (msg: string) => {
-    if (!imageSocketRef.current) {
-      resetImages();
-    }
-
-    if (msg === "playpause") {
-      if (!audioSocketRef.current || !audioCtx.current) {
-        resetAudio();
-        audioCtx.current?.resume();
-        return;
-      }
-      sendUDPCommand(msg, sidplayerIp);
-      // give SID player time to switch tracks
-      setTimeout(() => {
-        audioNodeRef.current?.port.postMessage({ type: "flush" });
-      }, 200);
-      setTimeout(() => {
-        audioNodeRef.current?.port.postMessage({ type: "flush" });
-      }, 200);
-      return;
-    }
-
-    if (msg === "stop") {
-      stopAudio();
-      audioNodeRef.current?.port.postMessage({ type: "flush" });
-      sendUDPCommand(msg, sidplayerIp);
-      return;
-    }
-
-    sendUDPCommand(msg, sidplayerIp);
-  };
+  const { send } = useSidCommands({
+    sidplayerIp,
+    audioCtx,
+    audioNodeRef,
+    audioSocketRef,
+    imageSocketRef,
+    resetAudio,
+    resetImages,
+  });
 
   const overlayZones = getOverlayZones(
     send,
@@ -158,7 +79,7 @@ export default function Page() {
   return (
     <div style={{ padding: 20 }}>
       {debugEnabled && (
-        <Debug 
+        <Debug
           startAudio={startAudio}
           stopAudio={stopAudio}
           startImages={startImages}
@@ -222,7 +143,7 @@ export default function Page() {
         <CustomButton
           ref={buttonRef}
           text="Settings"
-          click={() => handleOpen({buttonRef, setModalPos, setIsOpen})}
+          click={() => handleOpen({ buttonRef, setModalPos, setIsOpen })}
           className="ml-auto mt-5"
         />
         {isOpen && modalPos && (
