@@ -22,7 +22,7 @@ export default function BufferIndicator({
           }}
         />
       </div>
-      <div style={{ fontSize: 12, marginTop: 8 }}>
+      <div className="text-xs mt-2">
         {isBuffering
           ? "⏳ Buffering…"
           : isPrimed

@@ -38,6 +38,9 @@ export function useSidCommands({
       setTimeout(() => {
         audioNodeRef.current?.port.postMessage({ type: "flush" });
       }, 200);
+      setTimeout(() => {
+        audioNodeRef.current?.port.postMessage({ type: "flush" });
+      }, 200);
       
       return;
     }
