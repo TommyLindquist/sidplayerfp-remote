@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import { MuteSettingsButton } from "./mute-settings-button";
 
 export type OverlayZone = {
@@ -34,13 +33,12 @@ export const OverlayControls: React.FC<Props> = ({
         <div
           key={zone.id}
           onClick={zone.onClick}
+          className="absolute cursor-pointer"
           style={{
-            position: "absolute",
             top: zone.topPx,
             left: zone.leftPx,
             width: zone.widthPx,
             height: zone.heightPx,
-            cursor: "pointer",
             backgroundColor: debug ? "rgba(255,0,0,0.2)" : "transparent",
           }}
         />

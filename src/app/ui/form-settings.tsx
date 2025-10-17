@@ -23,14 +23,11 @@ export default function FormSettings({
   return (
     <div
       style={{
-        position: "absolute",
         top: position.top * 0.88,
         left: position.left,
         transform: "translate(-50%, -50%)",
-        zIndex: 1000,
-        padding: "1rem",
       }}
-      className="bg-green-400/88"
+      className="bg-green-400/88 absolute z-1000 p-4"
     >
       <form
         className="grid gap-2 bg-purple-950/40 m-2 p-5"

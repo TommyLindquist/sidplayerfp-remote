@@ -12,19 +12,11 @@ export default function BufferIndicator({
   return (
     <div className="mt-[20px] w-[460px]">
       <label>Buffer Fill:</label>
-      <div
-        style={{
-          width: "100%",
-          height: 10,
-          background: "#ccc",
-          marginTop: 4,
-          position: "relative",
-        }}
-      >
+      <div className="w-full h-2.5 mt-1 relative bg-gray-300">
         <div
+          className="h-full"
           style={{
             width: `${(bufferFill * 100).toFixed(1)}%`,
-            height: "100%",
             background: bufferFill > 0.0853 ? "#4caf50" : "#f44336",
             transition: "width 0.1s linear",
           }}

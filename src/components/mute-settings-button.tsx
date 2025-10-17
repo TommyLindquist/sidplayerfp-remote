@@ -15,11 +15,9 @@ export function MuteSettingsButton({
 }: propsTypes) {
   return (
     <button
-      className={`text-amber-50 cursor-pointer mt-2 items-baseline ${className}`}
+      className={`text-amber-50 cursor-pointer mt-2 items-baseline w-[30px] h-[15px]  ${className}`}
       style={{
         backgroundColor: bgColor,
-        width: 30,
-        height: 15,
         ...(typeof styles === "object" && styles !== null ? styles : {}),
       }}
       onClick={(e: React.MouseEvent<HTMLButtonElement>) => click(e)}
