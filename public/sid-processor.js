@@ -67,7 +67,7 @@ class SIDProcessor extends AudioWorkletProcessor {
   }
 
   sendStatus() {
-    // Send messages to to main gui thread, since all code here runs in its own thread we communicate like this ...
+    // Send messages to main gui thread, since all code here runs in its own thread we communicate like this ...
     if (++this.frameCount % 10 === 0) {
       this.port.postMessage({
         type: "status",
