@@ -1,5 +1,6 @@
 import { CustomButton } from "@/components/custom-button";
 import { RefObject } from "react";
+import { sendIp } from "../utils";
 
 export type propsTypes = {
   send: (msg: string) => void;
@@ -47,6 +48,7 @@ export default function LayoutPlayerButtons({
         text="Play / Pause"
         click={async () => {
           if (!audioCtx.current || !audioSocketRef.current) {
+            await sendIp(sidplayerIp, (res) => {}) // send ip if hard restart of app without refresh ...
             await resetAudio(); // full restart
             sendUDPCommand("replay", sidplayerIp);
             startImages(); // safe to start images
