@@ -1,29 +1,23 @@
 import { CustomButton } from "@/components/custom-button";
 import { RefObject } from "react";
-import { sendIp } from "../utils";
 
 export type propsTypes = {
   send: (msg: string) => void;
   audioNodeRef: RefObject<AudioWorkletNode | null>;
-  resetAudio: () => Promise<void>;
-  sendUDPCommand: (cmd: string, targetIP: string | null) => void;
-  audioCtx: RefObject<AudioContext | null>;
-  audioSocketRef: RefObject<WebSocket | null>;
-  sidplayerIp: string | null;
   startImages: () => void;
   repeatChecked: RefObject<boolean>;
-}
+  playPause: (
+    send: (msg: string) => void,
+    callback: () => void
+  ) => Promise<void>;
+};
 
 export default function LayoutPlayerButtons({
   send,
   audioNodeRef,
-  resetAudio,
-  sendUDPCommand,
-  audioCtx,
-  audioSocketRef,
-  sidplayerIp,
   startImages,
   repeatChecked,
+  playPause,
 }: propsTypes) {
   return (
     <>
@@ -46,16 +40,7 @@ export default function LayoutPlayerButtons({
       />
       <CustomButton
         text="Play / Pause"
-        click={async () => {
-          if (!audioCtx.current || !audioSocketRef.current) {
-            await sendIp(sidplayerIp, (res) => {}) // send ip if hard restart of app without refresh ...
-            await resetAudio(); // full restart
-            sendUDPCommand("replay", sidplayerIp);
-            startImages(); // safe to start images
-          } else {
-            send("playpause"); // toggle normally
-          }
-        }}
+        click={async () => await playPause(send, () => startImages())}
         styles={{ gridArea: "playpause" }}
       />
       <CustomButton

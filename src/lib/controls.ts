@@ -3,14 +3,13 @@ import { RefObject } from "react";
 
 export function getOverlayZones(
   send: (msg: string) => void,
-  sendUDPCommand: (cmd: string, ip: string) => void,
   startImages: () => void,
-  resetAudio: () => Promise<void>,
   audioNodeRef: RefObject<AudioWorkletNode | null>,
-  audioCtx: AudioContext | null,
-  audioSocketRef: RefObject<WebSocket | null>,
   repeatChecked: RefObject<boolean>,
-  sidplayerIp: string
+  playPause: (
+    send: (msg: string) => void,
+    callback: () => void
+  ) => Promise<void>
 ) {
   return [
     {
@@ -27,15 +26,7 @@ export function getOverlayZones(
       leftPx: 295,
       widthPx: 20,
       heightPx: 20,
-      onClick: async () => {
-        if (!audioCtx || !audioSocketRef.current) {
-          await resetAudio(); // full restart
-          sendUDPCommand("replay", sidplayerIp);
-          startImages(); // safe to start images
-        } else {
-          send("playpause"); // toggle normally
-        }
-      },
+      onClick: async () => await playPause(send, () => startImages()),
     },
     {
       id: "stop",

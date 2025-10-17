@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { Modal } from "./ui/modal";
 import FormSettings from "./ui/form-settings";
 import { CustomButton } from "@/components/custom-button";
-import { sendUDPCommand } from "@/lib/udp";
 import { useSidSettings } from "@/hooks/useSidSettings";
 import { OverlayControls } from "@/components/overlay-controls";
 import { getOverlayZones, getMuteButtons } from "@/lib/controls";
@@ -43,6 +42,7 @@ export default function Page() {
     bufferFill,
     isPrimed,
     isBuffering,
+    playPause,
   } = useAudioPlayer(sidplayerIp, yourIp);
 
   const { imageSocketRef, imageUrl, startImages, stopImages, resetImages } =
@@ -57,25 +57,21 @@ export default function Page() {
     resetAudio,
     resetImages,
     stopAudio,
-    stopImages
+    stopImages,
   });
 
   const overlayZones = getOverlayZones(
     send,
-    sendUDPCommand,
     startImages,
-    resetAudio,
     audioNodeRef,
-    audioCtx.current,
-    audioSocketRef,
     repeatChecked,
-    sidplayerIp ?? ""
+    playPause
   );
 
   const muteSettingsButtons = getMuteButtons(send);
 
   return (
-    <div style={{ padding: 10 }}>
+    <div className="p-2.5">
       {debugEnabled && (
         <Debug
           startAudio={startAudio}
@@ -104,13 +100,9 @@ export default function Page() {
         <LayoutPlayerButtons
           send={send}
           audioNodeRef={audioNodeRef}
-          resetAudio={resetAudio}
-          sendUDPCommand={sendUDPCommand}
-          audioCtx={audioCtx}
-          audioSocketRef={audioSocketRef}
-          sidplayerIp={sidplayerIp}
           startImages={startImages}
           repeatChecked={repeatChecked}
+          playPause={playPause}
         />
       </section>
 

@@ -1,3 +1,4 @@
+import { sendIp } from "@/app/utils";
 import { setupAudioNode } from "@/lib/audio";
 import { sendUDPCommand } from "@/lib/udp";
 import { useRef, useState } from "react";
@@ -57,6 +58,30 @@ export function useAudioPlayer(
     await startAudio();
   };
 
+  const closeAudioSocket = (
+    audioSocketRef: React.RefObject<WebSocket | null>
+  ) => {
+    if (audioSocketRef.current) {
+      audioSocketRef.current.close();
+      audioSocketRef.current = null;
+    }
+  };
+
+  const playPause = async (
+    send: (msg: string) => void,
+    callback: () => void
+  ) => {
+    if (!audioCtx.current || !audioSocketRef.current) {
+      closeAudioSocket(audioSocketRef); // Close, preventing stale socket in case of longer pauses etc.
+      await sendIp(sidplayerIp, (res) => {}); // send ip if hard restart of Next.JS without refresh of browser ...
+      await resetAudio(); // full restart
+      sendUDPCommand("replay", sidplayerIp);
+      callback();
+    } else {
+      send("playpause"); // toggle normally
+    }
+  };
+
   return {
     audioCtx,
     audioNodeRef,
@@ -67,5 +92,6 @@ export function useAudioPlayer(
     startAudio,
     stopAudio,
     resetAudio,
+    playPause
   };
 }
