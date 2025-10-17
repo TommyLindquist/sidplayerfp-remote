@@ -75,7 +75,7 @@ export default function Page() {
   const muteSettingsButtons = getMuteButtons(send);
 
   return (
-    <div style={{ padding: 20 }}>
+    <div style={{ padding: 10 }}>
       {debugEnabled && (
         <Debug
           startAudio={startAudio}
@@ -114,20 +114,14 @@ export default function Page() {
         />
       </section>
 
-      <div className="mt-5" style={{ width: 460, position: "relative" }}>
+      <div className="mt-5 w-[460px] relative">
         <img
           src={imageUrl ?? "sidplayerFp.png"}
           alt="Live Stream"
           width={460}
           height={280}
           loading="eager" // skip lazy loading and prioritizes decoding.
-          style={{
-            width: "100%",
-            height: "auto",
-            objectFit: "contain",
-            border: 0,
-            willChange: "transform",
-          }}
+          className="w-full h-auto border-0 object-contain will-change-transform"
         />
 
         <OverlayControls

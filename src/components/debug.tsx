@@ -27,8 +27,8 @@ export default function Debug({
   return (
     <aside className="w-[460px]">
       <h1
-        className="flex justify-center"
-        style={{ fontSize: "24px", fontWeight: "bold", color: "#6750a4" }}
+        className="flex justify-center text-2xl font-bold"
+        style={{ color: "#6750a4" }}
       >
         SID PlayerFP Remote debug
       </h1>
