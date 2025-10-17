@@ -9,6 +9,7 @@ export type propsTypes = {
   resetAudio: () => Promise<void>;
   resetImages: () => Promise<void>;
   stopAudio: () => void;
+  stopImages: () => void
 };
 
 export function useSidCommands({
@@ -19,7 +20,8 @@ export function useSidCommands({
   imageSocketRef,
   resetAudio,
   resetImages,
-  stopAudio
+  stopAudio,
+  stopImages
 }: propsTypes) {
   const send = (msg: string) => {
     if (!imageSocketRef.current) {
@@ -43,6 +45,7 @@ export function useSidCommands({
     if (msg === "stop") {
       stopAudio();
       audioNodeRef.current?.port.postMessage({ type: "flush" });
+      stopImages();
       sendUDPCommand(msg, sidplayerIp);
       return;
     }

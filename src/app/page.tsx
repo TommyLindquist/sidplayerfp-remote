@@ -57,6 +57,7 @@ export default function Page() {
     resetAudio,
     resetImages,
     stopAudio,
+    stopImages
   });
 
   const overlayZones = getOverlayZones(
