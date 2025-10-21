@@ -15,7 +15,7 @@ SidplayerFp Remote is a modular control and streaming system for SID-based audio
 - Next.js + React + Tailwind CSS
 - WebSocket for real-time streaming
 - UDP for command dispatch
-- AudioWorklet for low latency playback in it's own thread
+- AudioWorklet for low latency playback that runs in it's own thread
 
 ## 🧩 Project Structure
 
