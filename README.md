@@ -1,36 +1,114 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎧 SidplayerFp Remote
 
-## Getting Started
+SidplayerFp Remote is a modular control and streaming system for SID-based audio playback. It bridges modern web interfaces with legacy SID player hardware or emulators using a combination of HTTP, UDP, TCP, and WebSocket protocols. Designed for orchestration, diagnostics, and real-time control, it enables seamless interaction with audio and image streams from SidplayerFp.
 
-First, run the development server:
+---
+🧠 Features
+- 🎚️ Real-time audio control (play/pause, gain, mute, repeat)
+- 🖼️ Live image stream with overlay zones
+- 🧠 Buffer diagnostics and priming indicators
+- 🧪 Debug panel with manual stream controls
+- 🧱 Modular architecture for orchestration and extensibility
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+🛠️ Technologies
+- Node.js (express, dgram, net, ws)
+- Next.js + React + Tailwind CSS
+- WebSocket for real-time streaming
+- UDP for command dispatch
+- AudioWorklet for low latency playback in it's own thread
+
+## 🧩 Project Structure
+
+This system consists of theese main components:
+
+### 1. `tcp-bridge.js` — Audio & Image Stream Relay
+
+- Connects to the SID player via TCP (`AUDIO_PORT`, `IMAGE_PORT`)
+- Relays audio and image data to WebSocket clients (`/audio`, `/images`)
+- Handles stream buffering, error recovery, and reconnection logic
+- Accepts player IP via HTTP POST (`/set-ip`) on `CONTROL_PORT`
+
+### 2. `udp-proxy.js` — Command Dispatcher
+
+- Converts HTTP POST requests into UDP messages
+- Sends control commands (e.g. `playpause`, `gainraise`) to SID player on port `11001`
+- Runs on port `3001`
+
+### 3. `sid-processor.js` — AudioWorklet for SID Playback
+
+This file defines the SIDProcessor, a custom AudioWorkletProcessor that handles real-time stereo audio playback using a ring buffer.
+🔧 Key Features
+- Uses a RingBuffer to manage stereo PCM samples
+- Starts in "buffering" mode until enough data is available
+- Switches to "playing" once primed with 48,000 frames (1 second at 48kHz)
+- Re-enters "buffering" if available frames drop below 2048
+- Sends status updates (fillRatio, isPrimed, buffering) to the main thread every 10 frames
+- Supports flush messages to reset buffer stat
+
+
+### 4. `page.tsx` — Frontend Control Panel (Next.js)
+
+- Sends player IP to `tcp-bridge.js`
+- Initializes audio and image streams via custom hooks
+- Provides playback controls, gain/mute toggles, and repeat settings
+- Displays live image stream with overlay zones and buffer indicators
+- Includes a modal-based settings form and debug panel
+- Store IP Adresses in cookie for persistence among sessions
+
+```
+¦   
++---public
+¦       ring-buffer.js
+¦       sid-processor.js
+¦       
++---services
+¦       tcp-bridge.js
+¦       udp-proxy.js
+¦       
++---src
+    +---app
+    ¦   ¦   page.tsx
+    ¦   ¦   utils.ts
+    ¦   ¦   
+    ¦   +---ui
+    ¦           form-settings.tsx
+    ¦           layout-player-buttons.tsx
+    ¦           modal.tsx
+    ¦           
+    +---components
+    ¦       buffer-indicator.tsx
+    ¦       custom-button.tsx
+    ¦       debug.tsx
+    ¦       mute-settings-button.tsx
+    ¦       overlay-controls.tsx
+    ¦       
+    +---hooks
+    ¦       useAudioPlayer.ts
+    ¦       useImageStream.ts
+    ¦       useSidCommands.ts
+    ¦       useSidSettings.ts
+    ¦       
+    +---lib
+            audio.ts
+            controls.ts
+            image.ts
+            udp.ts
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 Getting Started
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Setup
 
-## Learn More
+```bash
+npm install
 
-To learn more about Next.js, take a look at the following resources:
+## Run
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+npm run start
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Ensure your SidplayerFp is reachable on the local network and listening on ports 11000, 11001, and 11002.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+📜 License
+MIT
