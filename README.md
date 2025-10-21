@@ -19,7 +19,7 @@ SidplayerFp Remote is a modular control and streaming system for SID-based audio
 
 ## 🧩 Project Structure
 
-This system consists of theese main components:
+This system consists of these main components:
 
 ### 1. `tcp-bridge.js` — Audio & Image Stream Relay
 
@@ -108,7 +108,8 @@ npm install
 
 npm run start
 
-## Ensure your SidplayerFp is reachable on the local network and listening on ports 11000, 11001, and 11002.
+## Ensure your SidplayerFp is reachable on the local network and 
+## listening on ports 11000, 11001, and 11002.
 ```
 ---
 📜 License
