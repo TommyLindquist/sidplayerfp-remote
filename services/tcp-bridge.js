@@ -193,6 +193,26 @@ app.post("/restart-audio", (req, res) => {
   res.send("Audio socket restarted");
 });
 
+app.post("/close-image", (req, res) => {
+  if (imageSocket) {
+    imageSocket.destroy(); // forcefully closes the TCP connection
+    imageSocket = null;
+    console.log("Image socket forcibly closed");
+    return res.send("Image socket closed");
+  }
+  res.send("No active image socket");
+});
+
+app.post("/restart-image", (req, res) => {
+  if (imageSocket) {
+    imageSocket.destroy();
+    imageSocket = null;
+  }
+  connectToImageStream(); // reconnect
+  console.log("Image socket restarted");
+  res.send("Image socket restarted");
+});
+
 app.listen(CONTROL_PORT, () => {
   console.log(`Control API listening on port ${CONTROL_PORT}`);
 });
