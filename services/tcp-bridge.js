@@ -173,6 +173,27 @@ app.post("/set-ip", (req, res) => {
   res.send(`Player IP set to ${ip}`);
 });
 
+app.post("/close-audio", (req, res) => {
+  if (audioSocket) {
+    audioSocket.destroy(); // forcefully closes the TCP connection
+    audioSocket = null;
+    console.log("Audio socket forcibly closed");
+    return res.send("Audio socket closed");
+  }
+  res.send("No active audio socket");
+});
+
+app.post("/restart-audio", (req, res) => {
+  if (audioSocket) {
+    audioSocket.destroy();
+    audioSocket = null;
+  }
+  connectToPlayer(); // reconnect
+  console.log("Audio socket restarted");
+  res.send("Audio socket restarted");
+});
+
 app.listen(CONTROL_PORT, () => {
   console.log(`Control API listening on port ${CONTROL_PORT}`);
 });
+

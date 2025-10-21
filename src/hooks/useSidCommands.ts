@@ -50,6 +50,7 @@ export function useSidCommands({
       audioNodeRef.current?.port.postMessage({ type: "flush" });
       stopImages();
       sendUDPCommand(msg, sidplayerIp);
+      fetch("http://localhost:3003/close-audio", { method: "POST" }); // forcibly close audio connection ...
       return;
     }
 

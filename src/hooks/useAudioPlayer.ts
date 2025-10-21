@@ -74,6 +74,7 @@ export function useAudioPlayer(
     if (!audioCtx.current || !audioSocketRef.current) {
       closeAudioSocket(audioSocketRef); // Close, preventing stale socket in case of longer pauses etc.
       await sendIp(sidplayerIp, (res) => {}); // send ip if hard restart of Next.JS without refresh of browser ...
+      await fetch("http://localhost:3003/restart-audio", { method: "POST" }); // forcibly restart audio connection ...
       await resetAudio(); // full restart
       sendUDPCommand("replay", sidplayerIp);
       callback();
