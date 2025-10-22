@@ -14,6 +14,7 @@ import Debug from "@/components/debug";
 import { useSidCommands } from "@/hooks/useSidCommands";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { useImageStream } from "@/hooks/useImageStream";
+import { sendUDPCommand } from "@/lib/udp";
 
 export default function Page() {
   const { sidplayerIp, yourIp, debugEnabled } = useSidSettings();
@@ -135,6 +136,20 @@ export default function Page() {
             <FormSettings
               position={modalPos}
               closeForm={() => setIsOpen(false)}
+              restartScreen={() => {
+                fetch("http://localhost:3003/restart-image", {
+                  method: "POST",
+                }); // forcibly restart image connection ...
+                resetImages();
+              }}
+              restartAudio={() => {
+                fetch("http://localhost:3003/restart-audio", {
+                  method: "POST",
+                }); // forcibly restart audio connection ...
+                resetAudio();
+                audioCtx.current?.resume();
+                sendUDPCommand("replay", sidplayerIp);
+              }}
             />
           </Modal>
         )}

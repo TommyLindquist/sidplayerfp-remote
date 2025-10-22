@@ -5,14 +5,21 @@ import {
   hasSettingsChanged,
   validateIp,
 } from "../utils";
+import { FormButton } from "@/components/form-button";
+
+export type FormSettingsPropsTypes = {
+  position: { top: number; left: number };
+  closeForm: () => void;
+  restartScreen: () => void;
+  restartAudio: () => void;
+};
 
 export default function FormSettings({
   position,
   closeForm,
-}: {
-  position: { top: number; left: number };
-  closeForm: () => void;
-}) {
+  restartScreen,
+  restartAudio,
+}: FormSettingsPropsTypes) {
   const [ip, setIp] = useState("");
   const [yourIp, setYourIp] = useState("");
   const [enableDebug, setEnableDebug] = useState(false);
@@ -31,7 +38,7 @@ export default function FormSettings({
         left: position.left,
         transform: "translate(-50%, -50%)",
       }}
-      className="bg-green-400/88 absolute z-1000 p-4"
+      className="bg-gray-400/88 absolute z-1000 p-2"
     >
       <form
         className="grid gap-2 bg-purple-950/40 m-2 p-5"
@@ -85,16 +92,43 @@ export default function FormSettings({
           />
         </div>
         <div className="flex gap-2 flex-nowrap">
-          <button type="submit" className="justify-self-start cursor-pointer">
-            OK
-          </button>
-          <button
+          <label htmlFor="submit" className="sr-only">
+            OK to submit changes
+          </label>
+          <input
+            type="submit"
+            defaultValue="OK"
+            id="submit"
+            name="submit"
+            className="justify-self-start cursor-pointer"
+          />
+          <label htmlFor="cancel" className="sr-only">
+            Cancel changing settings
+          </label>
+          <input
             type="button"
             className="ml-auto cursor-pointer"
+            name="cancel"
+            id="cancel"
+            defaultValue="Cancel"
             onClick={closeForm}
-          >
-            Cancel
-          </button>
+          />
+        </div>
+        <div className="h-[110px]">
+          <div className="bg-black/50 absolute left-[-7] bottom-[-9] m-6 p-2 py-4 w-[252px]">
+            <FormButton
+              text="Restart screen connection"
+              id="restartScreenConnection"
+              click={(e) => restartScreen()}
+              className="mx-7 mb-3"
+            />
+            <FormButton
+              text="Restart audio connection"
+              id="restartAudioConnection"
+              click={(e) => restartAudio()}
+              className="mx-7"
+            />
+          </div>
         </div>
       </form>
     </div>
