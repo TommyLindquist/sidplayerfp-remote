@@ -44,14 +44,13 @@ export default function FormSettings({
         className="grid gap-2 bg-purple-950/40 m-2 p-5"
         onSubmit={(e) => {
           e.preventDefault();
+          closeForm();
           if (hasSettingsChanged({ ip, yourIp, enableDebug })) {
             document.cookie = `sidIp=${ip.trim()}; path=/`;
             document.cookie = `yourIp=${yourIp.trim()}; path=/`;
             document.cookie = `debugEnabled=${enableDebug}; path=/`;
-            closeForm();
             window.location.reload();
           }
-          closeForm();
         }}
       >
         <label htmlFor="ipaddress">Enter IP address to player:</label>
