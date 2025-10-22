@@ -15,6 +15,23 @@ export function getSettingsFromCookie() {
   };
 }
 
+export function hasSettingsChanged({
+  ip,
+  yourIp,
+  enableDebug,
+}: {
+  ip: string;
+  yourIp: string;
+  enableDebug: boolean;
+}) {
+  const { sidIp, yourIp: storedYourIp, debugEnabled } = getSettingsFromCookie();
+  return (
+    ip.trim() !== sidIp ||
+    yourIp.trim() !== storedYourIp ||
+    enableDebug !== debugEnabled
+  );
+}
+
 export const clearSidCookie = () =>
   ["sidIp", "yourIp", "debugEnabled"].forEach(
     (cookie) =>
