@@ -7,14 +7,12 @@ export function useImageStream(
   yourIp: string | null
 ) {
   const imageSocketRef = useRef<WebSocket | null>(null);
-  const imageRingBuffer = useRef<string[]>([]);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const bufferSize = 500; // image strings buffer for display images as a video ...
 
   const startImages = () => {
     sendUDPCommand(`getimagesatoff ${yourIp}`, sidplayerIp);
     sendUDPCommand(`getimagesaton ${yourIp}`, sidplayerIp);
-    setupImageSocket(imageSocketRef, imageRingBuffer, bufferSize, setImageUrl);
+    setupImageSocket(imageSocketRef, setImageUrl);
   };
 
   const stopImages = () => {
@@ -32,7 +30,6 @@ export function useImageStream(
 
   return {
     imageSocketRef,
-    imageRingBuffer,
     imageUrl,
     startImages,
     stopImages,

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Modal } from "./ui/modal";
 import FormSettings from "./ui/form-settings";
@@ -26,8 +27,8 @@ export default function Page() {
   } | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
+ 
+   useEffect(() => {
     // Send player IP to tcp-bridge
     if (!sidplayerIp || ipSent) return;
     (async () => await sendIp(sidplayerIp, (res) => setIpSent(res)))();
@@ -108,8 +109,8 @@ export default function Page() {
       </section>
 
       <div className="mt-5 w-[460px] relative">
-        <img
-          src={imageUrl ?? "sidplayerFp.png"}
+        <Image
+          src={imageUrl ?? "/sidplayerFp.png"}
           alt="Live Stream"
           width={460}
           height={280}

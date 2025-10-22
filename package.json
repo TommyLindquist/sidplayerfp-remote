@@ -9,6 +9,8 @@
     "udp": "node services/udp-proxy.js",
     "app": "next dev --turbopack",
     "start": "concurrently \"npm run tcp\" \"npm run udp\" \"npm run app\"",
+    "start:prod": "concurrently \"npm run tcp\" \"npm run udp\" \"next start\"",
+    "preview": "npm run build && npm run start:prod",
     "lint": "eslint"
   },
   "dependencies": {

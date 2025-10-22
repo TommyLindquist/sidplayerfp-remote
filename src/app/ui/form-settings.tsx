@@ -41,7 +41,7 @@ export default function FormSettings({
       className="bg-gray-400/88 absolute z-1000 p-2"
     >
       <form
-        className="grid gap-2 bg-purple-950/40 m-2 p-5"
+        className="grid gap-2 bg-purple-950/40 m-2 p-5 border-1 border-black/20"
         onSubmit={(e) => {
           e.preventDefault();
           closeForm();
@@ -119,13 +119,13 @@ export default function FormSettings({
               text="Restart screen connection"
               id="restartScreenConnection"
               click={(e) => restartScreen()}
-              className="mx-7 mb-3"
+              className="mx-7 mb-3 bg-black/70!"
             />
             <FormButton
               text="Restart audio connection"
               id="restartAudioConnection"
               click={(e) => restartAudio()}
-              className="mx-7"
+              className="mx-7 bg-black/70!"
             />
           </div>
         </div>
