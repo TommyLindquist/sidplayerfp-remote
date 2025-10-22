@@ -81,6 +81,7 @@ This file defines the SIDProcessor, a custom AudioWorkletProcessor that handles 
     ¦       debug.tsx
     ¦       mute-settings-button.tsx
     ¦       overlay-controls.tsx
+    ¦       form-button.tsx
     ¦       
     +---hooks
     ¦       useAudioPlayer.ts
