@@ -113,6 +113,14 @@ export function getOverlayZones(
       heightPx: 20,
       onClick: () => send("mutesetting4"),
     },
+    {
+      id: "AdjustDisplay",
+      topPx: 135,
+      leftPx: 195,
+      widthPx: 20,
+      heightPx: 20,
+      onClick: () => send("AdjustDisplay"),
+    },
   ];
 }
 
